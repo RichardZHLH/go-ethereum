@@ -17,8 +17,8 @@
 package params
 
 const (
-	// ppow
-	MaximumExtraDataSize uint64 = 97 // Maximum size extra data may be after Genesis.
+	// ppow pos is larger than ppow
+	MaximumExtraDataSize uint64 = 400 // Maximum size extra data may be after Genesis.
 
 	// builtin bn256
 	ModExpQuadCoeffDiv      uint64 = 20     // Divisor for the quadratic particle of the big int modular exponentiation

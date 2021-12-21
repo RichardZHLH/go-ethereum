@@ -44,19 +44,19 @@ type (
 
 func (evm *EVM) precompileEth(addr common.Address) (PrecompiledContract, bool) {
 	var precompiles map[common.Address]PrecompiledContract
-	//switch {
-	//case evm.chainRules.IsBerlin:
-	//	precompiles = PrecompiledContractsBerlin
-	//case evm.chainRules.IsIstanbul:
-	//	precompiles = PrecompiledContractsIstanbul
-	//case evm.chainRules.IsByzantium:
-	//	precompiles = PrecompiledContractsByzantium
-	//default:
-	//	precompiles = PrecompiledContractsHomestead
-	//}
+	switch {
+	case evm.chainRules.IsBerlin:
+		precompiles = PrecompiledContractsBerlin
+	case evm.chainRules.IsIstanbul:
+		precompiles = PrecompiledContractsIstanbul
+	case evm.chainRules.IsByzantium:
+		precompiles = PrecompiledContractsByzantium
+	default:
+		precompiles = PrecompiledContractsHomestead
+	}
 
 	// add by Jacob
-	precompiles = PrecompiledContractsWanchain
+	precompiles = precompiles  // TODO PrecompiledContractsWanchain
 	p, ok := precompiles[addr]
 	return p, ok
 }
