@@ -462,6 +462,8 @@ func init() {
 
 /////////////////////////////
 type SolEnhance struct {
+	contract *Contract
+	evm      *EVM
 }
 
 //
@@ -910,7 +912,10 @@ func hexKey(prv string) *ecies.PrivateKey {
 }
 
 // bn256Add implements a native elliptic curve point addition.
-type s256Add struct{}
+type s256Add struct{
+	contract *Contract
+	evm      *EVM
+}
 
 // RequiredGas returns the gas required to execute the pre-compiled contract.
 func (s *s256Add) RequiredGas(input []byte) uint64 {
@@ -963,7 +968,10 @@ func (s *s256Add) ValidTx(stateDB StateDB, signer types.Signer, tx *types.Transa
 }
 
 // bn256ScalarMul implements a native elliptic curve scalar multiplication.
-type s256ScalarMul struct{}
+type s256ScalarMul struct{
+	contract *Contract
+	evm      *EVM
+}
 
 // RequiredGas returns the gas required to execute the pre-compiled contract.
 func (s *s256ScalarMul) RequiredGas(input []byte) uint64 {

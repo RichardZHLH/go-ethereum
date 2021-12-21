@@ -197,6 +197,8 @@ func GetRBStage(slotId uint64) (int, int, int) {
 // which will be used to generate next epoch leaders and slot leaders.
 // Random beacon protocol has 3 stages --- dkg1 (in 1k,2k slots), dkg2 (in 4k,5k slots), sigShare (in 8k, 9k slots)
 type RandomBeaconContract struct {
+	contract *Contract
+	evm      *EVM
 }
 
 //
