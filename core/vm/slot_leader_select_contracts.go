@@ -116,6 +116,8 @@ func init() {
 }
 
 type slotLeaderSC struct {
+	contract *Contract
+	evm      *EVM
 }
 
 func (c *slotLeaderSC) RequiredGas(input []byte) uint64 {

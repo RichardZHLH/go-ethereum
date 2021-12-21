@@ -576,6 +576,8 @@ func init() {
 // pos staking contract
 //
 type PosStaking struct {
+	contract *Contract
+	evm      *EVM
 }
 
 //

@@ -86,6 +86,8 @@ func init() {
 }
 
 type PosControl struct {
+	contract *Contract
+	evm      *EVM
 }
 
 //

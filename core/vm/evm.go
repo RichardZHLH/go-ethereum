@@ -42,7 +42,7 @@ type (
 	GetHashFunc func(uint64) common.Hash
 )
 
-func (evm *EVM) precompile(addr common.Address) (PrecompiledContract, bool) {
+func (evm *EVM) precompileEth(addr common.Address) (PrecompiledContract, bool) {
 	var precompiles map[common.Address]PrecompiledContract
 	//switch {
 	//case evm.chainRules.IsBerlin:
@@ -199,7 +199,7 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		return nil, gas, ErrInsufficientBalance
 	}
 	snapshot := evm.StateDB.Snapshot()
-	p, isPrecompile := evm.precompile(addr)
+	p, isPrecompile := evm.precompile(addr, caller, value, gas)
 
 	if !evm.StateDB.Exist(addr) {
 		if !isPrecompile && evm.chainRules.IsEIP158 && value.Sign() == 0 {
@@ -300,7 +300,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 	}
 
 	// It is allowed to call precompiles, even via delegatecall
-	if p, isPrecompile := evm.precompile(addr); isPrecompile {
+	if p, isPrecompile := evm.precompile(addr, caller, value, gas); isPrecompile {
 		contract := NewContract(caller, AccountRef(addr), value, gas)
 		ret, gas, err = RunPrecompiledContract(p, input, gas, contract, evm)
 	} else {
@@ -345,7 +345,7 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 	}
 
 	// It is allowed to call precompiles, even via delegatecall
-	if p, isPrecompile := evm.precompile(addr); isPrecompile {
+	if p, isPrecompile := evm.precompile(addr, caller, big.NewInt(0), gas); isPrecompile {
 		contract := NewContract(caller, AccountRef(addr), big.NewInt(0), gas)
 		ret, gas, err = RunPrecompiledContract(p, input, gas, contract, evm)
 	} else {
@@ -398,7 +398,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 		}(gas)
 	}
 
-	if p, isPrecompile := evm.precompile(addr); isPrecompile {
+	if p, isPrecompile := evm.precompile(addr, caller, big.NewInt(0), gas); isPrecompile {
 		contract := NewContract(caller, AccountRef(addr), big.NewInt(0), gas)
 		ret, gas, err = RunPrecompiledContract(p, input, gas, contract, evm)
 	} else {
