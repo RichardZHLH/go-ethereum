@@ -62,10 +62,11 @@ func NewWanContractCreation(txtype uint64, nonce uint64, amount *big.Int, gasLim
 // copy creates a deep copy of the transaction data and initializes all fields.
 func (tx *WanLegacyTx) copy() TxData {
 	cpy := &WanLegacyTx{
-		Nonce: tx.Nonce,
-		To:    tx.To, // TODO: copy pointed-to address
-		Data:  common.CopyBytes(tx.Data),
-		Gas:   tx.Gas,
+		Txtype: tx.Txtype, // add by Jacob
+		Nonce:  tx.Nonce,
+		To:     tx.To, // TODO: copy pointed-to address
+		Data:   common.CopyBytes(tx.Data),
+		Gas:    tx.Gas,
 		// These are initialized below.
 		Value:    new(big.Int),
 		GasPrice: new(big.Int),
@@ -104,9 +105,9 @@ func (tx *WanLegacyTx) gasPrice() *big.Int     { return tx.GasPrice }
 func (tx *WanLegacyTx) gasTipCap() *big.Int    { return tx.GasPrice }
 func (tx *WanLegacyTx) gasFeeCap() *big.Int    { return tx.GasPrice }
 
-func (tx *WanLegacyTx) value() *big.Int        { return tx.Value }
-func (tx *WanLegacyTx) nonce() uint64          { return tx.Nonce }
-func (tx *WanLegacyTx) to() *common.Address    { return tx.To }
+func (tx *WanLegacyTx) value() *big.Int     { return tx.Value }
+func (tx *WanLegacyTx) nonce() uint64       { return tx.Nonce }
+func (tx *WanLegacyTx) to() *common.Address { return tx.To }
 
 func (tx *WanLegacyTx) rawSignatureValues() (v, r, s *big.Int) {
 	return tx.V, tx.R, tx.S

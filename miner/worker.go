@@ -481,10 +481,10 @@ func (w *worker) mainLoop() {
 	for {
 		select {
 		case req := <-w.newWorkCh:
-                       //todo it is about block produce, change later.
-                       fmt.Printf("req", req)
+			//todo it is about block produce, change later.
+			fmt.Printf("req", req)
 
-						//w.commitNewWork(req.interrupt, req.noempty, req.timestamp)
+			//w.commitNewWork(req.interrupt, req.noempty, req.timestamp)
 
 		case slotTime := <-w.chainSlotTimer:
 			w.commitNewWork(nil, false, int64(slotTime))
@@ -605,7 +605,7 @@ func (w *worker) taskLoop() {
 			// Reject duplicate sealing work due to resubmitting.
 			sealHash := w.engine.SealHash(task.block.Header())
 			if sealHash == prev {
-				continue
+				//continue    // cancel by Jacob
 			}
 			// Interrupt previous sealing operation
 			interrupt()
@@ -866,6 +866,9 @@ func (w *worker) commitTransactions(txs *types.TransactionsByPriceAndNonce, coin
 		w.current.state.Prepare(tx.Hash(), w.current.tcount)
 
 		logs, err := w.commitTransaction(tx, coinbase)
+		if err != nil {
+			fmt.Printf("***************************w.commitTransaction error, %v", err.Error())
+		}
 		switch {
 		case errors.Is(err, core.ErrGasLimitReached):
 			// Pop the current out-of-gas transaction without shifting in the next from the account
@@ -1014,6 +1017,8 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 
 	// Create an empty block based on temporary copied state for
 	// sealing in advance without waiting block execution finished.
+
+	w.disablePreseal() // add by jacob
 	if !noempty && atomic.LoadUint32(&w.noempty) == 0 {
 		w.commit(uncles, nil, false, tstart)
 	}
@@ -1038,12 +1043,14 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 	if len(localTxs) > 0 {
 		txs := types.NewTransactionsByPriceAndNonce(w.current.signer, localTxs, header.BaseFee)
 		if w.commitTransactions(txs, w.coinbase, interrupt) {
+			log.Info("Jacob commitTransactions return localTxs")
 			return
 		}
 	}
 	if len(remoteTxs) > 0 {
 		txs := types.NewTransactionsByPriceAndNonce(w.current.signer, remoteTxs, header.BaseFee)
 		if w.commitTransactions(txs, w.coinbase, interrupt) {
+			log.Info("Jacob commitTransactions return remotTxs")
 			return
 		}
 	}
@@ -1056,6 +1063,9 @@ func (w *worker) commit(uncles []*types.Header, interval func(), update bool, st
 	// Deep copy receipts here to avoid interaction between different tasks.
 	receipts := copyReceipts(w.current.receipts)
 	s := w.current.state.Copy()
+
+	log.Info("Jacob worker commit", "len(w.current.txs)", len(w.current.txs), "update", update)
+
 	block, err := w.engine.FinalizeAndAssemble(w.chain, w.current.header, s, w.current.txs, uncles, receipts)
 	if err != nil {
 		return err

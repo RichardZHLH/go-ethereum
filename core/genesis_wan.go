@@ -60,9 +60,6 @@ func DefaultTestnetGenesisBlock() *Genesis {
 	}
 }
 
-
-
-
 // DefaultInternalGenesisBlock returns the Rinkeby network genesis block.
 func DefaultInternalGenesisBlock() *Genesis {
 	return &Genesis{
@@ -87,7 +84,6 @@ func DefaultPlutoGenesisBlock() *Genesis {
 		Alloc:      jsonPrealloc(PlutoAllocJson),
 	}
 }
-
 
 /*
 1 wanfoundation address:1０％,６％,３％
@@ -141,10 +137,11 @@ const wanchainPPOWDevAllocJson = `{
 }`
 
 var PlutoAllocJson = `{
-	"0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e": {"balance": "100000000000000000000"},
+	"0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e": {"balance": "10000000000000000000000000000000000000"},
 	"0xe20bfe3c8777036ca0ab03f3bcbbfb438d97dd91": {"balance": "100000000000000000000"},
 	"0x9da26fc2e1d6ad9fdd46138906b0104ae68a65d8": {"balance": "100000000000000000000"},
  	"0xb02737095f945768ca983a60e0ba92b758111111": {"balance": "10000000000000000000000000000000000000"},
 	"0xb752027021340f2fec33abc91daf198915bbbbbb": {"balance": "10000000000000000000000000000000000000"},
-	"0xe8ffc3d0c02c0bfc39b139fa49e2c5475f000000": {"balance": "10000000000000000000000000000000000000"}
+	"0xe8ffc3d0c02c0bfc39b139fa49e2c5475f000000": {"balance": "10000000000000000000000000000000000000"},
+	"0x1f233a8cfef8a0b8b84b318d1305e3bcd0074b99": {"balance": "10000000000000000000000000000000000000"}
  }`

@@ -1027,23 +1027,44 @@ func (ethash *Pluto) SealHash(header *types.Header) (hash common.Hash) {
 
 	hasher := sha3.NewLegacyKeccak256()
 
+	/*
+		rlp.Encode(hasher, []interface{}{
+			header.ParentHash,
+			header.UncleHash,
+			//header.Coinbase,
+			header.Root,
+			header.TxHash,
+			header.ReceiptHash,
+			header.Bloom,
+			header.Difficulty,
+			header.Number,
+			header.GasLimit,
+			header.GasUsed,
+			header.Time,
+			//header.Extra[:len(header.Extra)-extraSeal], // Yes, this will panic if extra is too short
+			header.MixDigest,
+			header.Nonce,
+		})
+	*/
+
 	rlp.Encode(hasher, []interface{}{
 		header.ParentHash,
-		header.UncleHash,
-		//header.Coinbase,
-		header.Root,
-		header.TxHash,
-		header.ReceiptHash,
-		header.Bloom,
-		header.Difficulty,
+		//header.UncleHash,
+		////header.Coinbase,
+		//header.Root,
+		//header.TxHash,
+		//header.ReceiptHash,
+		//header.Bloom,
+		//header.Difficulty,
 		header.Number,
-		header.GasLimit,
-		header.GasUsed,
-		header.Time,
-		//header.Extra[:len(header.Extra)-extraSeal], // Yes, this will panic if extra is too short
-		header.MixDigest,
-		header.Nonce,
+		//header.GasLimit,
+		//header.GasUsed,
+		//header.Time,
+		////header.Extra[:len(header.Extra)-extraSeal], // Yes, this will panic if extra is too short
+		//header.MixDigest,
+		//header.Nonce,
 	})
+
 	hasher.Sum(hash[:0])
 	return hash
 
@@ -1066,7 +1087,6 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 		header.MixDigest,
 		header.Nonce,
 	}
-
 
 	if header.BaseFee != nil {
 		enc = append(enc, header.BaseFee)

@@ -63,15 +63,20 @@ func MakeSigner(config *params.ChainConfig, blockNumber *big.Int) Signer {
 // have the current block number available, use MakeSigner instead.
 func LatestSigner(config *params.ChainConfig) Signer {
 	if config.ChainID != nil {
-		if config.LondonBlock != nil {
-			return NewLondonSigner(config.ChainID)
-		}
-		if config.BerlinBlock != nil {
-			return NewEIP2930Signer(config.ChainID)
-		}
-		if config.EIP155Block != nil {
-			return NewEIP155Signer(config.ChainID)
-		}
+
+		// cancel by Jacob begin
+		//if config.LondonBlock != nil {
+		//	return NewLondonSigner(config.ChainID)
+		//}
+		//if config.BerlinBlock != nil {
+		//	return NewEIP2930Signer(config.ChainID)
+		//}
+		//if config.EIP155Block != nil {
+		//	return NewEIP155Signer(config.ChainID)
+		//}
+		// cancel by Jacob end
+
+		return NewEIP155Signer(config.ChainID) // add by Jacob
 	}
 	return HomesteadSigner{}
 }
@@ -129,15 +134,16 @@ func MustSignNewTx(prv *ecdsa.PrivateKey, s Signer, txdata TxData) *Transaction 
 // signing method. The cache is invalidated if the cached signer does
 // not match the signer used in the current call.
 func Sender(signer Signer, tx *Transaction) (common.Address, error) {
-	if sc := tx.from.Load(); sc != nil {
-		sigCache := sc.(sigCache)
-		// If the signer used to derive from in a previous
-		// call is not the same as used current, invalidate
-		// the cache.
-		if sigCache.signer.Equal(signer) {
-			return sigCache.from, nil
-		}
-	}
+	//todo need uncomment below
+	//if sc := tx.from.Load(); sc != nil {
+	//	sigCache := sc.(sigCache)
+	//	// If the signer used to derive from in a previous
+	//	// call is not the same as used current, invalidate
+	//	// the cache.
+	//	if sigCache.signer.Equal(signer) {
+	//		return sigCache.from, nil
+	//	}
+	//}
 
 	addr, err := signer.Sender(tx)
 	if err != nil {
@@ -178,7 +184,8 @@ type londonSigner struct{ eip2930Signer }
 // - EIP-155 replay protected transactions, and
 // - legacy Homestead transactions.
 func NewLondonSigner(chainId *big.Int) Signer {
-	return londonSigner{eip2930Signer{NewEIP155Signer(chainId)}}
+	return NewEIP155Signer(chainId)
+	//return londonSigner{eip2930Signer{NewEIP155Signer(chainId)}}   // cancel by Jacob
 }
 
 func (s londonSigner) Sender(tx *Transaction) (common.Address, error) {
@@ -362,7 +369,8 @@ func (s EIP155Signer) Equal(s2 Signer) bool {
 var big8 = big.NewInt(8)
 
 func (s EIP155Signer) Sender(tx *Transaction) (common.Address, error) {
-	if tx.Type() != LegacyTxType && tx.Type() != WanLegacyTxType && tx.Type() != WanTestnetTxType && tx.Type() != WanPosTxType && tx.Type() != WanPrivTxType && tx.Type() !=WanJupiterTxType {
+
+	if tx.Type() != LegacyTxType && tx.Type() != WanLegacyTxType && tx.Type() != WanTestnetTxType && tx.Type() != WanPosTxType && tx.Type() != WanPrivTxType && tx.Type() != WanJupiterTxType {
 		return common.Address{}, ErrTxTypeNotSupported
 	}
 	if !tx.Protected() {
@@ -371,6 +379,7 @@ func (s EIP155Signer) Sender(tx *Transaction) (common.Address, error) {
 	//if tx.ChainId().Cmp(s.chainId) != 0 {
 	//	return common.Address{}, ErrInvalidChainId
 	//}
+	fmt.Printf("tx.ChainID()=%v,s.chainId=%v\n", tx.ChainId(), s.chainId)
 	if !(tx.ChainId().Cmp(s.chainId) == 0 || tx.ChainId().Uint64() == params.JupiterChainId(s.chainId.Uint64())) {
 		return common.Address{}, ErrInvalidChainId
 	}
@@ -398,7 +407,22 @@ func (s EIP155Signer) Sender(tx *Transaction) (common.Address, error) {
 // SignatureValues returns signature values. This signature
 // needs to be in the [R || S || V] format where V is 0 or 1.
 func (s EIP155Signer) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big.Int, err error) {
-	if tx.Type() != LegacyTxType && tx.Type() != WanLegacyTxType && tx.Type() != WanTestnetTxType && tx.Type() != WanPosTxType && tx.Type() != WanPrivTxType && tx.Type() !=WanJupiterTxType {
+	txType := tx.Type()
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+	fmt.Printf("********************************************************************txType=%v", txType)
+
+	if tx.Type() != LegacyTxType && tx.Type() != WanLegacyTxType && tx.Type() != WanTestnetTxType && tx.Type() != WanPosTxType && tx.Type() != WanPrivTxType && tx.Type() != WanJupiterTxType {
 		return nil, nil, nil, ErrTxTypeNotSupported
 	}
 	R, S, V = decodeSignature(sig)
@@ -463,7 +487,7 @@ func (hs HomesteadSigner) SignatureValues(tx *Transaction, sig []byte) (r, s, v 
 }
 
 func (hs HomesteadSigner) Sender(tx *Transaction) (common.Address, error) {
-	if tx.Type() != LegacyTxType && tx.Type() != WanLegacyTxType && tx.Type() != WanTestnetTxType && tx.Type() != WanPosTxType && tx.Type() != WanPrivTxType && tx.Type() !=WanJupiterTxType {
+	if tx.Type() != LegacyTxType && tx.Type() != WanLegacyTxType && tx.Type() != WanTestnetTxType && tx.Type() != WanPosTxType && tx.Type() != WanPrivTxType && tx.Type() != WanJupiterTxType {
 		return common.Address{}, ErrTxTypeNotSupported
 	}
 	v, r, s := tx.RawSignatureValues()
