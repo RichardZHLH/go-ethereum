@@ -477,8 +477,9 @@ func (s *SolEnhance) ValidTx(stateDB StateDB, signer types.Signer, tx *types.Tra
 	return nil
 }
 
-func (s *SolEnhance) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
-
+func (s *SolEnhance) Run(input []byte) ([]byte, error) {
+	contract := s.contract
+	evm  := s.evm
 	epid, _ := posutil.CalEpochSlotID(evm.Time().Uint64())
 	if epid < posconfig.Cfg().MarsEpochId {
 		// return nil,errors.New("not reach forked epochid")
@@ -922,7 +923,9 @@ func (s *s256Add) RequiredGas(input []byte) uint64 {
 	return params.S256AddGas
 }
 
-func (s *s256Add) Run(payload []byte, contract *Contract, evm *EVM) ([]byte, error) {
+func (s *s256Add) Run(payload []byte) ([]byte, error) {
+	//contract := s.contract
+	evm  := s.evm
 	if evm != nil {
 		epid, _ := posutil.CalEpochSlotID(evm.Time().Uint64())
 		if epid < posconfig.Cfg().MarsEpochId {
@@ -978,7 +981,9 @@ func (s *s256ScalarMul) RequiredGas(input []byte) uint64 {
 	return params.S256ScalarMulGas
 }
 
-func (s *s256ScalarMul) Run(payload []byte, contract *Contract, evm *EVM) ([]byte, error) {
+func (s *s256ScalarMul) Run(payload []byte) ([]byte, error) {
+	//contract := s.contract
+	evm  := s.evm
 	if evm != nil {
 		epid, _ := posutil.CalEpochSlotID(evm.Time().Uint64())
 		if epid < posconfig.Cfg().MarsEpochId {

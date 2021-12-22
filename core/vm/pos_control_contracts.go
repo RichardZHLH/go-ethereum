@@ -97,7 +97,9 @@ func (p *PosControl) RequiredGas(input []byte) uint64 {
 	return 0
 }
 
-func (p *PosControl) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
+func (p *PosControl) Run(input []byte) ([]byte, error) {
+	contract := p.contract
+	evm  := p.evm
 	if len(input) < 4 {
 		return nil, errors.New("parameter is wrong")
 	}

@@ -124,7 +124,9 @@ func (c *slotLeaderSC) RequiredGas(input []byte) uint64 {
 	return 0
 }
 
-func (c *slotLeaderSC) Run(in []byte, contract *Contract, evm *EVM) ([]byte, error) {
+func (c *slotLeaderSC) Run(in []byte) ([]byte, error) {
+	contract := c.contract
+	evm  := c.evm
 	functrace.Enter()
 	log.Debug("slotLeaderSC run is called")
 

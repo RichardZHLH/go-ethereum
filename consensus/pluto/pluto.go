@@ -53,7 +53,6 @@ import (
 	posUtil "github.com/ethereum/go-ethereum/pos/util"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/ethereum/go-ethereum/core/vm"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -816,20 +815,9 @@ func (c *Pluto) Finalize(chain consensus.ChainHeaderReader, header *types.Header
 		//header.Root = state.IntermediateRoot(true /*chain.Config().IsEIP158(header.Number)*/)
 
 		snap = state.Snapshot()
-		if !epochLeader.StakeOutRun(state, epochID) {
+		if !epochLeader.StakeOutRun(state, epochID, chain.Config().ChainID.Int64()) {
 			log.SyslogErr("Stake Out failed.")
 			state.RevertToSnapshot(snap)
-		}
-		if chain.Config().ChainID.Int64() == params.MainnetChainId {
-			// TODO fix bugs.
-			if epochID == 18146 {
-				value,_ := big.NewInt(0).SetString("2500000000000000000000",10)
-				epochLeader.CoreTransfer(state, vm.WanCscPrecompileAddr, common.HexToAddress("0xa70e1b8F66717609305BBf288d46dd34c2328Fd9"), value)
-			}
-			if epochID == 18247 {
-				value,_ := big.NewInt(0).SetString("1000000000000000000000",10)
-				epochLeader.CoreTransfer(state, vm.WanCscPrecompileAddr, common.HexToAddress("0xeFBd4Bf1aD83ba480865DD6de322D39FbEa445F1"), value)
-			}
 		}
 	}
 

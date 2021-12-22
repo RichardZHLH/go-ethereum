@@ -218,13 +218,13 @@ func (c *wanchainStampSC) RequiredGas(input []byte) uint64 {
 	return params.SstoreSetGas * 2
 }
 
-func (c *wanchainStampSC) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
-	c.contract = contract
-	c.evm = evm
-	return c._Run(input)
-}
+//func (c *wanchainStampSC) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
+//	c.contract = contract
+//	c.evm = evm
+//	return c._Run(input)
+//}
 
-func (c *wanchainStampSC) _Run(in []byte) ([]byte, error) {
+func (c *wanchainStampSC) Run(in []byte) ([]byte, error) {
 	if len(in) < 4 {
 		return nil, errParameters
 	}
@@ -367,7 +367,7 @@ func (c *wanCoinSC) RequiredGas(input []byte) uint64 {
 
 }
 
-func (c *wanCoinSC) _Run(in []byte) ([]byte, error) { //, contract *Contract, evm *EVM
+func (c *wanCoinSC) Run(in []byte) ([]byte, error) { //, contract *Contract, evm *EVM
 	if len(in) < 4 {
 		return nil, errParameters
 	}
@@ -384,14 +384,14 @@ func (c *wanCoinSC) _Run(in []byte) ([]byte, error) { //, contract *Contract, ev
 	return nil, errMethodId
 }
 
-func (c *wanCoinSC) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
-	// add by Jacob begin
-	c.contract = contract
-	c.evm = evm
-	// add by Jacob end
-
-	return c._Run(input)
-}
+//func (c *wanCoinSC) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
+//	// add by Jacob begin
+//	c.contract = contract
+//	c.evm = evm
+//	// add by Jacob end
+//
+//	return c._Run(input)
+//}
 
 func (c *wanCoinSC) ValidTx(stateDB StateDB, signer types.Signer, tx *types.Transaction) error {
 	if stateDB == nil || signer == nil || tx == nil {
