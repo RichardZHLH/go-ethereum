@@ -456,7 +456,7 @@ func GetStage1FunctionID(abiString string) ([4]byte, error) {
 		return slotStage1ID, err
 	}
 
-	copy(slotStage1ID[:], abi.Methods["slotLeaderStage1MiSave"].Id())
+	copy(slotStage1ID[:], abi.Methods["slotLeaderStage1MiSave"].ID)
 
 	return slotStage1ID, nil
 }
@@ -470,7 +470,7 @@ func GetStage2FunctionID(abiString string) ([4]byte, error) {
 		return slotStage2ID, err
 	}
 
-	copy(slotStage2ID[:], abi.Methods["slotLeaderStage2InfoSave"].Id())
+	copy(slotStage2ID[:], abi.Methods["slotLeaderStage2InfoSave"].ID)
 
 	return slotStage2ID, nil
 }

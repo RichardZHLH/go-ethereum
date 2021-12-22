@@ -209,12 +209,12 @@ func init() {
 		panic("err in rb smart contract abi initialize")
 	}
 
-	copy(dkg1Id[:], rbSCAbi.Methods["dkg1"].Id())
-	copy(dkg2Id[:], rbSCAbi.Methods["dkg2"].Id())
-	copy(sigShareId[:], rbSCAbi.Methods["sigShare"].Id())
-	copy(getEpochIdId[:], rbSCAbi.Methods["getEpochId"].Id())
-	copy(getRandomNumberByEpochIdId[:], rbSCAbi.Methods["getRandomNumberByEpochId"].Id())
-	copy(getRandomNumberByTimestampId[:], rbSCAbi.Methods["getRandomNumberByTimestamp"].Id())
+	copy(dkg1Id[:], rbSCAbi.Methods["dkg1"].ID)
+	copy(dkg2Id[:], rbSCAbi.Methods["dkg2"].ID)
+	copy(sigShareId[:], rbSCAbi.Methods["sigShare"].ID)
+	copy(getEpochIdId[:], rbSCAbi.Methods["getEpochId"].ID)
+	copy(getRandomNumberByEpochIdId[:], rbSCAbi.Methods["getRandomNumberByEpochId"].ID)
+	copy(getRandomNumberByTimestampId[:], rbSCAbi.Methods["getRandomNumberByTimestamp"].ID)
 }
 
 //

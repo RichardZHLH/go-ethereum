@@ -166,7 +166,3 @@ func (method Method) IsPayable() bool {
 	return method.StateMutability == "payable" || method.Payable
 }
 
-// add by Jacob
-func (method Method) Id() []byte {
-	return method.ID
-}

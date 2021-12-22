@@ -82,7 +82,7 @@ func init() {
 		panic("err in posControl abi initialize ")
 	}
 
-	copy(upgradeWhiteEpochLeaderId[:], posControlAbi.Methods["upgradeWhiteEpochLeader"].Id())
+	copy(upgradeWhiteEpochLeaderId[:], posControlAbi.Methods["upgradeWhiteEpochLeader"].ID)
 }
 
 type PosControl struct {

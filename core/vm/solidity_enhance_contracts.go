@@ -446,18 +446,18 @@ func init() {
 		panic("err in csc abi initialize ")
 	}
 
-	copy(getPosAvgReturnId[:], solenhanceAbi.Methods["getPosAvgReturn"].Id())
-	copy(s256Addid[:], solenhanceAbi.Methods["add"].Id())
-	copy(s256MulGid[:], solenhanceAbi.Methods["mulG"].Id())
-	copy(checkSigid[:], solenhanceAbi.Methods["checkSig"].Id())
+	copy(getPosAvgReturnId[:], solenhanceAbi.Methods["getPosAvgReturn"].ID)
+	copy(s256Addid[:], solenhanceAbi.Methods["add"].ID)
+	copy(s256MulGid[:], solenhanceAbi.Methods["mulG"].ID)
+	copy(checkSigid[:], solenhanceAbi.Methods["checkSig"].ID)
 	copy(checkSigid2[:], common.Hex2Bytes("861731d5"))
-	copy(encid[:], solenhanceAbi.Methods["enc"].Id())
-	copy(hardCapid[:], solenhanceAbi.Methods["getHardCap"].Id())
-	copy(s256MulPkid[:], solenhanceAbi.Methods["mulPk"].Id())
+	copy(encid[:], solenhanceAbi.Methods["enc"].ID)
+	copy(hardCapid[:], solenhanceAbi.Methods["getHardCap"].ID)
+	copy(s256MulPkid[:], solenhanceAbi.Methods["mulPk"].ID)
 
-	copy(s256CalPolyCommitid[:], solenhanceAbi.Methods["s256CalPolyCommit"].Id())
-	copy(bn256CalPolyCommitid[:], solenhanceAbi.Methods["bn256CalPolyCommit"].Id())
-	copy(bn256MulGid[:], solenhanceAbi.Methods["bn256MulG"].Id())
+	copy(s256CalPolyCommitid[:], solenhanceAbi.Methods["s256CalPolyCommit"].ID)
+	copy(bn256CalPolyCommitid[:], solenhanceAbi.Methods["bn256CalPolyCommit"].ID)
+	copy(bn256MulGid[:], solenhanceAbi.Methods["bn256MulG"].ID)
 }
 
 /////////////////////////////
