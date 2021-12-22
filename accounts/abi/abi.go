@@ -133,8 +133,6 @@ func (abi ABI) UnpackIntoInterfaceWan(v interface{}, name string, data []byte) e
 			return fmt.Errorf("abi: improperly formatted output")
 		}
 		args = method.Inputs
-	} else if event, ok := abi.Events[name]; ok {
-		args = event.Inputs
 	}
 	unpacked, err := args.Unpack(data)
 	if err != nil {

@@ -224,7 +224,9 @@ func (c *RandomBeaconContract) RequiredGas(input []byte) uint64 {
 	return 0
 }
 
-func (c *RandomBeaconContract) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
+func (c *RandomBeaconContract) Run(input []byte) ([]byte, error) {
+	contract := c.contract
+	evm  := c.evm
 	// check data
 	if len(input) < 4 {
 		return nil, errParameters
