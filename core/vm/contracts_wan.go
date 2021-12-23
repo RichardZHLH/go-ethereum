@@ -269,7 +269,7 @@ func (c *wanchainStampSC) ValidBuyStampReq(stateDB StateDB, payload []byte, valu
 		Value   *big.Int
 	}
 
-	err = stampAbi.UnpackIntoInterface(&StampInput, "buyStamp", payload)
+	err = stampAbi.UnpackInput(&StampInput, "buyStamp", payload)
 	if err != nil || StampInput.Value == nil {
 		return nil, errBuyStamp
 	}
@@ -344,7 +344,7 @@ func (c *wanCoinSC) RequiredGas(input []byte) uint64 {
 			Value          *big.Int
 		}
 
-		err := coinAbi.UnpackIntoInterface(&RefundStruct, "refundCoin", input[4:])
+		err := coinAbi.UnpackInput(&RefundStruct, "refundCoin", input[4:])
 		if err != nil {
 			return params.RequiredGasPerMixPub
 		}
@@ -437,7 +437,7 @@ func (c *wanCoinSC) ValidBuyCoinReq(stateDB StateDB, payload []byte, txValue *bi
 		Value   *big.Int
 	}
 
-	err = coinAbi.UnpackIntoInterface(&outStruct, "buyCoinNote", payload)
+	err = coinAbi.UnpackInput(&outStruct, "buyCoinNote", payload)
 	if err != nil || outStruct.Value == nil {
 		return nil, errBuyCoin
 	}
@@ -506,7 +506,7 @@ func (c *wanCoinSC) ValidRefundReq(stateDB StateDB, payload []byte, from []byte)
 		Value          *big.Int
 	}
 
-	err = coinAbi.UnpackIntoInterface(&RefundStruct, "refundCoin", payload)
+	err = coinAbi.UnpackInput(&RefundStruct, "refundCoin", payload)
 	if err != nil || RefundStruct.Value == nil {
 		return nil, nil, errRefundCoin
 	}

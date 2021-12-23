@@ -165,4 +165,3 @@ func (method Method) IsConstant() bool {
 func (method Method) IsPayable() bool {
 	return method.StateMutability == "payable" || method.Payable
 }
-

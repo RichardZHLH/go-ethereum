@@ -86,9 +86,9 @@ func (abi ABI) getArguments(name string, data []byte) (Arguments, error) {
 	// we need to decide whether we're calling a method or an event
 	var args Arguments
 	if method, ok := abi.Methods[name]; ok {
-		//if len(data)%32 != 0 { // TODO:wanchain old tx input does not match this rule.
-			//return nil, fmt.Errorf("abi: improperly formatted output: %s - Bytes: [%+v]", string(data), data)
-		//}
+		if len(data)%32 != 0 {
+			return nil, fmt.Errorf("abi: improperly formatted output: %s - Bytes: [%+v]", string(data), data)
+		}
 		args = method.Outputs
 	}
 	if event, ok := abi.Events[name]; ok {
