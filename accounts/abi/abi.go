@@ -124,23 +124,6 @@ func (abi ABI) UnpackIntoInterface(v interface{}, name string, data []byte) erro
 	return args.Copy(v, unpacked)
 }
 
-// add by jacob
-func (abi ABI) UnpackIntoInterfaceWan(v interface{}, name string, data []byte) error {
-
-	var args Arguments
-	if method, ok := abi.Methods[name]; ok {
-		if len(data)%32 != 0 {
-			return fmt.Errorf("abi: improperly formatted output")
-		}
-		args = method.Inputs
-	}
-	unpacked, err := args.Unpack(data)
-	if err != nil {
-		return err
-	}
-	return args.Copy(v, unpacked)
-}
-
 // UnpackIntoMap unpacks a log into the provided map[string]interface{}.
 func (abi ABI) UnpackIntoMap(v map[string]interface{}, name string, data []byte) (err error) {
 	args, err := abi.getArguments(name, data)
