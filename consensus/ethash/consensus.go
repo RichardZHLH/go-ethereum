@@ -20,8 +20,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/pos/posconfig"
-	"github.com/ethereum/go-ethereum/pos/util"
+	//"github.com/ethereum/go-ethereum/pos/posconfig"
+	//"github.com/ethereum/go-ethereum/pos/util"
 	"math/big"
 	"runtime"
 	"time"
@@ -283,10 +283,10 @@ func (ethash *Ethash) verifyHeader(chain consensus.ChainHeaderReader, header, pa
 		return fmt.Errorf("invalid gasLimit: have %v, max %v", header.GasLimit, cap)
 	}
 
-	epId, _ := util.CalEpochSlotID(parent.Time)
-	if epId >= posconfig.ApolloEpochID {
-		params.GasLimitBoundDivisor = params.GasLimitBoundDivisorNew
-	}
+	//epId, _ := util.CalEpochSlotID(parent.Time)
+	//if epId >= posconfig.ApolloEpochID {
+	//	params.GasLimitBoundDivisor = params.GasLimitBoundDivisorNew
+	//}
 	// Verify that the gasUsed is <= gasLimit
 	if header.GasUsed > header.GasLimit {
 		return fmt.Errorf("invalid gasUsed: have %d, gasLimit %d", header.GasUsed, header.GasLimit)
@@ -593,7 +593,7 @@ func (ethash *Ethash) Prepare(chain consensus.ChainHeaderReader, header *types.H
 // setting the final state on the header
 func (ethash *Ethash) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
 	// Accumulate any block and uncle rewards and commit the final state root
-	accumulateRewards(chain.Config(), state, header, uncles)
+	// accumulateRewards(chain.Config(), state, header, uncles)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 }
 
@@ -644,30 +644,26 @@ var (
 // reward. The total reward consists of the static block reward and rewards for
 // included uncles. The coinbase of each uncle block is also rewarded.
 func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header *types.Header, uncles []*types.Header) {
-	//// Skip block reward in catalyst mode
-	//if config.IsCatalyst(header.Number) {
-	//	return
-	//}
-	//// Select the correct block reward based on chain progression
-	//blockReward := FrontierBlockReward
-	//if config.IsByzantium(header.Number) {
-	//	blockReward = ByzantiumBlockReward
-	//}
-	//if config.IsConstantinople(header.Number) {
-	//	blockReward = ConstantinopleBlockReward
-	//}
-	//// Accumulate the rewards for the miner and any included uncles
-	//reward := new(big.Int).Set(blockReward)
-	//r := new(big.Int)
-	//for _, uncle := range uncles {
-	//	r.Add(uncle.Number, big8)
-	//	r.Sub(r, header.Number)
-	//	r.Mul(r, blockReward)
-	//	r.Div(r, big8)
-	//	state.AddBalance(uncle.Coinbase, r)
-	//
-	//	r.Div(blockReward, big32)
-	//	reward.Add(reward, r)
-	//}
-	//state.AddBalance(header.Coinbase, reward)
+	// Select the correct block reward based on chain progression
+	blockReward := FrontierBlockReward
+	if config.IsByzantium(header.Number) {
+		blockReward = ByzantiumBlockReward
+	}
+	if config.IsConstantinople(header.Number) {
+		blockReward = ConstantinopleBlockReward
+	}
+	// Accumulate the rewards for the miner and any included uncles
+	reward := new(big.Int).Set(blockReward)
+	r := new(big.Int)
+	for _, uncle := range uncles {
+		r.Add(uncle.Number, big8)
+		r.Sub(r, header.Number)
+		r.Mul(r, blockReward)
+		r.Div(r, big8)
+		state.AddBalance(uncle.Coinbase, r)
+
+		r.Div(blockReward, big32)
+		reward.Add(reward, r)
+	}
+	state.AddBalance(header.Coinbase, reward)
 }
