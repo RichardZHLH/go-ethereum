@@ -42,6 +42,8 @@ import (
 type Backend interface {
 	// General Ethereum API
 	SyncProgress() ethereum.SyncProgress
+	ProtocolVersion() int
+	SuggestPrice(ctx context.Context) (*big.Int, error)
 
 	SuggestGasTipCap(ctx context.Context) (*big.Int, error)
 	FeeHistory(ctx context.Context, blockCount int, lastBlock rpc.BlockNumber, rewardPercentiles []float64) (*big.Int, [][]*big.Int, []*big.Int, []float64, error)

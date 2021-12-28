@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/ethereum/go-ethereum/pos/posconfig"
 	"math/rand"
 	"time"
@@ -28,7 +29,10 @@ func SendTx(rc *rpc.Client, tx map[string]interface{}) (common.Hash, error) {
 		return common.Hash{}, errors.New("rc is not ready")
 	}
 
-	tx["gasPrice"] = "0x"+posconfig.Cfg().DefaultGasPrice.Text(16)
+	tx["gasPrice"] = "0x" + posconfig.Cfg().DefaultGasPrice.Text(16)
+
+	//todo delete
+	log.SyslogInfo("==================SendTx=================", "arg", fmt.Sprintf("%#v", tx))
 
 	ctx := context.Background()
 	var txHash common.Hash
@@ -42,14 +46,12 @@ func SendTx(rc *rpc.Client, tx map[string]interface{}) (common.Hash, error) {
 	return txHash, nil
 }
 
-func SendPosTx(rc *rpc.Client, tx map[string]interface{})  {
+func SendPosTx(rc *rpc.Client, tx map[string]interface{}) {
 	if posconfig.TxDelay != 0 {
 		delay := rand.Intn(posconfig.TxDelay)
-		time.Sleep(time.Duration(delay)*time.Second)
-		log.Debug("SendPosTx", "delay",delay )
+		time.Sleep(time.Duration(delay) * time.Second)
+		log.Debug("SendPosTx", "delay", delay)
 	}
-
-
 
 	SendTx(rc, tx)
 }

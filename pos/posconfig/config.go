@@ -179,7 +179,7 @@ var DefaultConfig = Config{
 	0,
 	0,
 	0,
-	nil,
+	big.NewInt(int64(params.GWei)), // add by Jacob
 
 	0,
 }
