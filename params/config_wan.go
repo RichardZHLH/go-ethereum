@@ -79,6 +79,7 @@ var (
 		IstanbulBlock:       big.NewInt(999_000_000_000),
 		MuirGlacierBlock:    big.NewInt(999_000_000_000),
 		BerlinBlock:         big.NewInt(999_000_000_000),
+		LondonBlock:         big.NewInt(10_499_401),
 		Ethash:              new(EthashConfig),
 
 		// add by Jacob
@@ -183,6 +184,7 @@ var (
 		IstanbulBlock:       big.NewInt(999_000_000_000),
 		MuirGlacierBlock:    big.NewInt(999_000_000_000),
 		BerlinBlock:         big.NewInt(999_000_000_000),
+		LondonBlock:         big.NewInt(1000),
 		Ethash:              new(EthashConfig),
 
 		// add by Jacob
@@ -271,7 +273,7 @@ func (c *ChainConfig) IsPosBlockNumber(n *big.Int) bool {
 var (
 	isPosActive    = false
 	TestnetChainId = TestnetChainConfig.ChainID.Int64()
-	MainnetChainId = WanchainChainConfig.ChainID.Int64()
+	MainnetChainId = MainnetChainConfig.ChainID.Int64()
 )
 
 func IsPosActive() bool {
