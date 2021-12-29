@@ -3,7 +3,6 @@ package util
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/ethereum/go-ethereum/pos/posconfig"
 	"math/rand"
 	"time"
@@ -30,9 +29,6 @@ func SendTx(rc *rpc.Client, tx map[string]interface{}) (common.Hash, error) {
 	}
 
 	tx["gasPrice"] = "0x" + posconfig.Cfg().DefaultGasPrice.Text(16)
-
-	//todo delete
-	log.SyslogInfo("==================SendTx=================", "arg", fmt.Sprintf("%#v", tx))
 
 	ctx := context.Background()
 	var txHash common.Hash

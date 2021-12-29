@@ -43,6 +43,7 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/params"
+	posutil "github.com/ethereum/go-ethereum/pos/util"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/tyler-smith/go-bip39"
@@ -1239,6 +1240,14 @@ func RPCMarshalBlock(block *types.Block, inclTx bool, fullTx bool, config *param
 		uncleHashes[i] = uncle.Hash()
 	}
 	fields["uncles"] = uncleHashes
+
+	// add by Jacob begin
+	if block.NumberU64() >= config.PosFirstBlock.Uint64() {
+		epochid, slotid := posutil.CalEpSlbyTd(block.Difficulty().Uint64())
+		fields["epochId"] = epochid
+		fields["slotId"] = slotid
+	}
+	// add by Jacob end
 
 	return fields, nil
 }
