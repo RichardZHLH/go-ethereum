@@ -407,20 +407,6 @@ func (s EIP155Signer) Sender(tx *Transaction) (common.Address, error) {
 // SignatureValues returns signature values. This signature
 // needs to be in the [R || S || V] format where V is 0 or 1.
 func (s EIP155Signer) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big.Int, err error) {
-	txType := tx.Type()
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
-	fmt.Printf("********************************************************************txType=%v", txType)
 
 	if tx.Type() != LegacyTxType && tx.Type() != WanLegacyTxType && tx.Type() != WanTestnetTxType && tx.Type() != WanPosTxType && tx.Type() != WanPrivTxType && tx.Type() != WanJupiterTxType {
 		return nil, nil, nil, ErrTxTypeNotSupported

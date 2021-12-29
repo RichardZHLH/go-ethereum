@@ -420,7 +420,7 @@ func submitTransaction(ctx context.Context, b Backend, tx *types.Transaction) (c
 
 func (s *PublicTransactionPoolAPI) SendPosTransaction(ctx context.Context, args SendTxArgs) (common.Hash, error) {
 
-	log.Info("SendPosTransaction", "---------------args-------------------", args.String())
+	//log.Info("SendPosTransaction", "---------------args-------------------", args.String())
 	// Look up the wallet containing the requested signer
 	account := accounts.Account{Address: args.From}
 
