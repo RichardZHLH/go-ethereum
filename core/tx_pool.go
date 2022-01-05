@@ -638,7 +638,7 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 		return ErrInsufficientFunds
 	}
 	// Ensure the transaction has more gas than the basic tx fee.
-	intrGas, err := IntrinsicGas(tx.Data(), tx.AccessList(), tx.To() == nil, true, pool.istanbul,tx.To())
+	intrGas, err := IntrinsicGas(tx.Data(), tx.AccessList(), tx.To() == nil, true, pool.istanbul, tx.To())
 	if err != nil {
 		return err
 	}
@@ -1350,6 +1350,42 @@ func (pool *TxPool) promoteExecutables(accounts []common.Address) []*types.Trans
 		log.Trace("Removed unpayable queued transactions", "count", len(drops))
 		queuedNofundsMeter.Mark(int64(len(drops)))
 
+		// Remove all invalid privacy transactions
+		invalidPrivacy := list.InvalidPrivacyTx(pool.currentState, pool.signer, big.NewInt(0).SetUint64(pool.currentMaxGas))
+		for _, tx := range invalidPrivacy {
+			hash := tx.Hash()
+			log.Trace("Removed invalid privacy transaction", "hash", hash)
+			pool.all.Remove(hash)
+
+			//delete(pool.all, hash)
+			//pool.priced.Removed()
+			//queuedNofundsCounter.Inc(1)
+		}
+
+		// Remove all invalid pos transactions
+		invalidPos := list.InvalidPosRBTx(pool.currentState, pool.signer)
+		for _, tx := range invalidPos {
+			hash := tx.Hash()
+			log.Trace("Removed invalid pos transaction", "hash", hash)
+			pool.all.Remove(hash)
+
+			//delete(pool.all, hash)
+			//pool.priced.Removed()
+			//pendingNofundsCounter.Inc(1)
+		}
+
+		// Remove all invalid EL pos transactions
+		invalidPosEL := list.InvalidPosELTx(pool.currentState, pool.signer)
+		for _, tx := range invalidPosEL {
+			hash := tx.Hash()
+			log.Trace("Removed invalid pos EL transaction", "hash", hash)
+			pool.all.Remove(hash)
+
+			//delete(pool.all, hash)
+			//pool.priced.Removed()
+			//pendingNofundsCounter.Inc(1)
+		}
+
 		// Gather all executable transactions and promote them
 		readies := list.Ready(pool.pendingNonces.get(addr))
 		for _, tx := range readies {
@@ -1554,6 +1590,44 @@ func (pool *TxPool) demoteUnexecutables() {
 			// Internal shuffle shouldn't touch the lookup set.
 			pool.enqueueTx(hash, tx, false, false)
 		}
+
+		// add by Jacob begin
+		// Remove all invalid privacy transactions
+		invalidPrivacy := list.InvalidPrivacyTx(pool.currentState, pool.signer, big.NewInt(0).SetUint64(pool.currentMaxGas))
+		for _, tx := range invalidPrivacy {
+			hash := tx.Hash()
+			log.Trace("Removed invalid privacy transaction", "hash", hash)
+			//delete(pool.all, hash)
+			//pool.priced.Removed()
+			//pendingNofundsCounter.Inc(1)
+
+			pool.all.Remove(hash)
+		}
+
+		// Remove all invalid pos transactions
+		invalidPos := list.InvalidPosRBTx(pool.currentState, pool.signer)
+		for _, tx := range invalidPos {
+			hash := tx.Hash()
+			log.Trace("Removed invalid pos transaction", "hash", hash)
+			//delete(pool.all, hash)
+			//pool.priced.Removed()
+			//pendingNofundsCounter.Inc(1)
+
+			pool.all.Remove(hash)
+		}
+
+		// Remove all invalid EL pos transactions
+		invalidPosEL := list.InvalidPosELTx(pool.currentState, pool.signer)
+		for _, tx := range invalidPosEL {
+			hash := tx.Hash()
+			log.Trace("Removed invalid pos EL transaction", "hash", hash)
+			//delete(pool.all, hash)
+			//pool.priced.Removed()
+			//pendingNofundsCounter.Inc(1)
+			pool.all.Remove(hash)
+		}
+		// add by Jacob end
+
 		pendingGauge.Dec(int64(len(olds) + len(drops) + len(invalids)))
 		if pool.locals.contains(addr) {
 			localGauge.Dec(int64(len(olds) + len(drops) + len(invalids)))

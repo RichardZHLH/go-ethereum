@@ -379,7 +379,9 @@ func (s EIP155Signer) Sender(tx *Transaction) (common.Address, error) {
 	//if tx.ChainId().Cmp(s.chainId) != 0 {
 	//	return common.Address{}, ErrInvalidChainId
 	//}
-	fmt.Printf("tx.ChainID()=%v,s.chainId=%v\n", tx.ChainId(), s.chainId)
+
+	//fmt.Printf("tx.ChainID()=%v,s.chainId=%v\n", tx.ChainId(), s.chainId)
+
 	if !(tx.ChainId().Cmp(s.chainId) == 0 || tx.ChainId().Uint64() == params.JupiterChainId(s.chainId.Uint64())) {
 		return common.Address{}, ErrInvalidChainId
 	}

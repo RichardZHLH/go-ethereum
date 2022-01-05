@@ -382,7 +382,8 @@ func (args *SendTxArgs) setDefaults(ctx context.Context, b Backend) error {
 }
 
 func (args *SendTxArgs) String() string {
-	return fmt.Sprintf("\n\n%#v\n\n", args)
+	return fmt.Sprintf("From=%v,To=%v,Gas=%v,GasPrice=%v,Nonce=%v",
+		args.From, args.To, args.Gas, args.GasPrice, *(args.Nonce))
 }
 
 func (args *SendTxArgs) toTransaction(txType uint64) *types.Transaction {
@@ -419,8 +420,6 @@ func submitTransaction(ctx context.Context, b Backend, tx *types.Transaction) (c
 }
 
 func (s *PublicTransactionPoolAPI) SendPosTransaction(ctx context.Context, args SendTxArgs) (common.Hash, error) {
-
-	//log.Info("SendPosTransaction", "---------------args-------------------", args.String())
 	// Look up the wallet containing the requested signer
 	account := accounts.Account{Address: args.From}
 
@@ -440,7 +439,7 @@ func (s *PublicTransactionPoolAPI) SendPosTransaction(ctx context.Context, args 
 	if err := args.setDefaults(ctx, s.b); err != nil {
 		return common.Hash{}, err
 	}
-
+	log.Info("SendPosTransaction", "args", args.String())
 	// Assemble the transaction and sign with the wallet
 	tx := args.toTransaction(uint64(types.POS_TX))
 
