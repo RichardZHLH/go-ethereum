@@ -290,8 +290,9 @@ func (self *Miner) posStartInit(s Backend, localPublicKey string) (stop bool) {
 	}
 
 	for {
-
+		log.Info("PosStartInit", "self.Mining()", self.Mining())
 		h := s.BlockChain().GetHeaderByNumber(s.BlockChain().Config().PosFirstBlock.Uint64())
+		log.Info("PosStartInit", "GetHeaderByNumber header", h)
 
 		if nil == h {
 			//select {

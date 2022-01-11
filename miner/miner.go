@@ -120,6 +120,8 @@ func (miner *Miner) update() {
 			}
 			switch ev.Data.(type) {
 			case downloader.StartEvent:
+				//todo should delete log
+				log.Info("Miner::update StartEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase, "canStart", canStart, "wasMining", miner.Mining())
 				wasMining := miner.Mining()
 				miner.worker.stop()
 				canStart = false
@@ -130,14 +132,20 @@ func (miner *Miner) update() {
 				}
 			case downloader.FailedEvent:
 				canStart = true
+				//todo should delete log
+				log.Info("Miner::update FailedEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase)
 				if shouldStart {
 					miner.SetEtherbase(miner.coinbase)
+					miner.Start(miner.coinbase) // add by Jacob
 					miner.worker.start()
 				}
 			case downloader.DoneEvent:
 				canStart = true
+				//todo should delete log
+				log.Info("Miner::update DoneEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase)
 				if shouldStart {
 					miner.SetEtherbase(miner.coinbase)
+					miner.Start(miner.coinbase) // add by Jacob
 					miner.worker.start()
 				}
 				// Stop reacting to downloader events
@@ -146,6 +154,7 @@ func (miner *Miner) update() {
 		case addr := <-miner.startCh:
 			miner.SetEtherbase(addr)
 			if canStart {
+				//miner.Start(miner.coinbase) // add by Jacob
 				miner.worker.start()
 			}
 			shouldStart = true
@@ -160,6 +169,9 @@ func (miner *Miner) update() {
 }
 
 func (miner *Miner) Start(coinbase common.Address) {
+
+	miner.coinbase = coinbase // add by Jacob
+
 	miner.startCh <- coinbase
 	if miner.eth.BlockChain().Config().IsPosActive || miner.eth.BlockChain().IsInPosStage() {
 		go miner.backendTimerLoop(miner.eth)

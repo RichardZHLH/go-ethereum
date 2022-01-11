@@ -3,13 +3,12 @@ package util
 import (
 	"context"
 	"errors"
-	"github.com/ethereum/go-ethereum/pos/posconfig"
-	"math/rand"
-	"time"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/pos/posconfig"
 	"github.com/ethereum/go-ethereum/rpc"
+	"math/rand"
+	"time"
 )
 
 //type SendTxArgs struct {
@@ -45,7 +44,9 @@ func SendTx(rc *rpc.Client, tx map[string]interface{}) (common.Hash, error) {
 func SendPosTx(rc *rpc.Client, tx map[string]interface{}) {
 	if posconfig.TxDelay != 0 {
 		delay := rand.Intn(posconfig.TxDelay)
-		time.Sleep(time.Duration(delay) * time.Second)
+		//time.Sleep(time.Duration(delay) * time.Second)
+		//todo should change back
+		time.Sleep(time.Duration(delay) * time.Millisecond * 2)
 		log.Debug("SendPosTx", "delay", delay)
 	}
 
