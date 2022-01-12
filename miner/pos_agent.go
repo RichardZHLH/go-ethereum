@@ -243,6 +243,10 @@ func (self *Miner) backendTimerLoop(s Backend) {
 	}
 }
 
+//func (self *Miner) backendTimerLoop(s Backend) {
+//	log.Debug("backendTimerLoop is running")
+//}
+
 func (self *Miner) posStartInit(s Backend, localPublicKey string) (stop bool) {
 
 	h0 := s.BlockChain().GetHeaderByNumber(s.BlockChain().Config().PosFirstBlock.Uint64() - 1)
