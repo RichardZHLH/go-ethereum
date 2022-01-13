@@ -1768,7 +1768,23 @@ func (s *PublicTransactionPoolAPI) SendRawTransaction(ctx context.Context, input
 	if err := tx.UnmarshalBinary(input); err != nil {
 		return common.Hash{}, err
 	}
-	return SubmitTransaction(ctx, s.b, tx)
+
+	tx1 := tx
+	if posutil.IsJupiterForkArrived() {
+		data := &types.WanLegacyTx{
+			Txtype:   uint64(types.WanJupiterTxType),
+			To:       tx.To(),
+			Nonce:    tx.Nonce(),
+			Gas:      tx.Gas(),
+			GasPrice: tx.GasPrice(),
+			Value:    tx.Value(),
+			Data:     tx.Data(),
+		}
+		data.V, data.R, data.S = tx.RawSignatureValues()
+		tx1 = types.NewTx(data)
+
+	}
+	return SubmitTransaction(ctx, s.b, tx1)
 }
 
 // Sign calculates an ECDSA signature for:
