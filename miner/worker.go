@@ -867,7 +867,7 @@ func (w *worker) commitTransactions(txs *types.TransactionsByPriceAndNonce, coin
 
 		logs, err := w.commitTransaction(tx, coinbase)
 		if err != nil {
-			fmt.Printf("***************************w.commitTransaction error, %v", err.Error())
+			fmt.Printf("***************************w.commitTransaction error, %v\n", err.Error())
 		}
 		switch {
 		case errors.Is(err, core.ErrGasLimitReached):
