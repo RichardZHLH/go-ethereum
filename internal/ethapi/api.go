@@ -1772,7 +1772,7 @@ func (s *PublicTransactionPoolAPI) SendRawTransaction(ctx context.Context, input
 	tx1 := tx
 	if posutil.IsJupiterForkArrived() {
 		data := &types.WanLegacyTx{
-			Txtype:   uint64(types.WanJupiterTxType),
+			Txtype:   uint64(types.JUPITER_TX),
 			To:       tx.To(),
 			Nonce:    tx.Nonce(),
 			Gas:      tx.Gas(),
