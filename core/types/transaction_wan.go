@@ -46,6 +46,6 @@ func IsValidTransactionType(txType uint64) bool {
 	return (txType == NORMAL_TX || txType == PRIVACY_TX || txType == POS_TX || txType == JUPITER_TX)
 }
 
-func IsEthereumTx(txType byte) bool {
-	return (txType == WanJupiterTxType)
+func IsEthereumTx(chainId uint64) bool {
+	return (chainId > 100)
 }

@@ -21,6 +21,7 @@ import (
 	"container/heap"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/pos/posconfig"
 	"io"
 	"math/big"
 	"sync/atomic"
@@ -44,12 +45,13 @@ var (
 // Transaction types.
 const (
 	LegacyTxType     = iota
+	AccessListTxType = 1
+	DynamicFeeTxType = 2
+
 	WanLegacyTxType  = 1
-	WanTestnetTxType = 2
+	WanTestnetTxType = 1 // TODO
 	WanPrivTxType    = 6
 	WanPosTxType     = 7
-	AccessListTxType = 9
-	DynamicFeeTxType = 10
 	WanJupiterTxType = 0xFF
 )
 
@@ -95,7 +97,7 @@ type TxData interface {
 
 // EncodeRLP implements rlp.Encoder
 func (tx *Transaction) EncodeRLP(w io.Writer) error {
-	if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanTestnetTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
+	if tx.IsLegacyType() {
 		return rlp.Encode(w, tx.inner)
 	}
 	// It's an EIP-2718 typed TX envelope.
@@ -118,7 +120,7 @@ func (tx *Transaction) encodeTyped(w *bytes.Buffer) error {
 // For legacy transactions, it returns the RLP encoding. For EIP-2718 typed
 // transactions, it returns the type and payload.
 func (tx *Transaction) MarshalBinary() ([]byte, error) {
-	if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanTestnetTxType || tx.Type() == WanTestnetTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
+	if tx.IsLegacyType() {
 		return rlp.EncodeToBytes(tx.inner)
 	}
 	var buf bytes.Buffer
@@ -161,7 +163,7 @@ func (tx *Transaction) DecodeRLP(s *rlp.Stream) error {
 func (tx *Transaction) UnmarshalBinary(b []byte) error {
 	if len(b) > 0 && b[0] > 0x7f {
 		// It's a legacy transaction.
-		var data LegacyTx
+		var data WanLegacyTx
 		err := rlp.DecodeBytes(b, &data)
 		if err != nil {
 			return err
@@ -184,23 +186,17 @@ func (tx *Transaction) decodeTyped(b []byte) (TxData, error) {
 		return nil, errEmptyTypedTx
 	}
 	switch b[0] {
-	case AccessListTxType:
-		var inner AccessListTx
-		err := rlp.DecodeBytes(b[1:], &inner)
-		return &inner, err
-	case LegacyTxType, WanLegacyTxType, WanTestnetTxType, WanPrivTxType, WanPosTxType, WanJupiterTxType:
-		var inner LegacyTx
-		err := rlp.DecodeBytes(b[:], &inner)
-		if err != nil {
-			fmt.Println("decodeTyped:", err)
-		}
-		return &inner, err
 	case DynamicFeeTxType:
 		var inner DynamicFeeTx
 		err := rlp.DecodeBytes(b[1:], &inner)
 		return &inner, err
 	default:
-		return nil, ErrTxTypeNotSupported
+		var inner WanLegacyTx
+		err := rlp.DecodeBytes(b[:], &inner)
+		if err != nil {
+			fmt.Println("decodeTyped:", err)
+		}
+		return &inner, err
 	}
 }
 
@@ -382,7 +378,7 @@ func (tx *Transaction) Hash() common.Hash {
 	}
 
 	var h common.Hash
-	if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanTestnetTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
+	if tx.IsLegacyType() {
 		h = rlpHash(tx.inner)
 	} else {
 		h = prefixedRlpHash(tx.Type(), tx.inner)
@@ -401,6 +397,31 @@ func (tx *Transaction) Size() common.StorageSize {
 	rlp.Encode(&c, &tx.inner)
 	tx.size.Store(common.StorageSize(c))
 	return common.StorageSize(c)
+}
+
+func (tx *Transaction) IsValidType() bool {
+	// TODO check how many types we need.
+	if posconfig.LondonForked {
+		if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanTestnetTxType  || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
+			return true
+		}
+	} else {
+		if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == DynamicFeeTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
+			return true
+		}
+	}
+
+	return false
+}
+func (tx *Transaction) IsLegacyType() bool {
+	if posconfig.LondonForked {
+		return true
+	}
+
+	if tx.Type() == DynamicFeeTxType {
+		return false
+	}
+	return true
 }
 
 // WithSignature returns a new transaction with the given signature.
@@ -426,7 +447,7 @@ func (s Transactions) Len() int { return len(s) }
 // constructed by decoding or via public API in this package.
 func (s Transactions) EncodeIndex(i int, w *bytes.Buffer) {
 	tx := s[i]
-	if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanTestnetTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
+	if tx.IsLegacyType() {
 		rlp.Encode(w, tx.inner)
 	} else {
 		tx.encodeTyped(w)
