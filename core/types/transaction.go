@@ -21,7 +21,7 @@ import (
 	"container/heap"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/pos/posconfig"
+	"github.com/ethereum/go-ethereum/params"
 	"io"
 	"math/big"
 	"sync/atomic"
@@ -136,10 +136,18 @@ func (tx *Transaction) DecodeRLP(s *rlp.Stream) error {
 		return err
 	case kind == rlp.List:
 		// It's a legacy transaction.
+		b,_ := s.Raw()
 		var inner WanLegacyTx
-		err := s.Decode(&inner)
+		err:= rlp.DecodeBytes(b, &inner)
 		if err == nil {
 			tx.setDecoded(&inner, int(rlp.ListSize(size)))
+		}else{
+			var inner2 LegacyTx
+			err2:= rlp.DecodeBytes(b, &inner2)
+			if err2 == nil {
+				tx.setDecoded(&inner2, int(rlp.ListSize(size)))
+			}
+			return err2
 		}
 		return err
 	case kind == rlp.String:
@@ -166,7 +174,12 @@ func (tx *Transaction) UnmarshalBinary(b []byte) error {
 		var data WanLegacyTx
 		err := rlp.DecodeBytes(b, &data)
 		if err != nil {
-			return err
+			var data2 LegacyTx
+			err2 := rlp.DecodeBytes(b, &data2)
+			if err2 == nil {
+				tx.setDecoded(&data2, len(b))
+			}
+			return err2
 		}
 		tx.setDecoded(&data, len(b))
 		return nil
@@ -195,6 +208,9 @@ func (tx *Transaction) decodeTyped(b []byte) (TxData, error) {
 		err := rlp.DecodeBytes(b[:], &inner)
 		if err != nil {
 			fmt.Println("decodeTyped:", err)
+			var inner2 LegacyTx
+			err2 := rlp.DecodeBytes(b[:], &inner2)
+			return &inner2, err2
 		}
 		return &inner, err
 	}
@@ -401,7 +417,7 @@ func (tx *Transaction) Size() common.StorageSize {
 
 func (tx *Transaction) IsValidType() bool {
 	// TODO check how many types we need.
-	if posconfig.LondonForked {
+	if params.IsLondonActive() {
 		if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanTestnetTxType  || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
 			return true
 		}
@@ -414,7 +430,7 @@ func (tx *Transaction) IsValidType() bool {
 	return false
 }
 func (tx *Transaction) IsLegacyType() bool {
-	if posconfig.LondonForked {
+	if !params.IsLondonActive() {
 		return true
 	}
 

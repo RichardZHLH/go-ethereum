@@ -1770,7 +1770,8 @@ func (s *PublicTransactionPoolAPI) SendRawTransaction(ctx context.Context, input
 	}
 
 	tx1 := tx
-	if posutil.IsJupiterForkArrived() {
+	fmt.Println("infoxxxxxxxxxxxxxxx:", tx.IsLegacyType() , posutil.IsJupiterForkArrived() , types.IsEthereumTx(tx.ChainId().Uint64()))
+	if tx.IsLegacyType() && posutil.IsJupiterForkArrived() && types.IsEthereumTx(tx.ChainId().Uint64()){
 		data := &types.WanLegacyTx{
 			Txtype:   uint64(types.JUPITER_TX),
 			To:       tx.To(),
