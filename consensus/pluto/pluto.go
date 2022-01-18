@@ -815,7 +815,7 @@ func (c *Pluto) Finalize(chain consensus.ChainHeaderReader, header *types.Header
 		//header.Root = state.IntermediateRoot(true /*chain.Config().IsEIP158(header.Number)*/)
 
 		snap = state.Snapshot()
-		if !epochLeader.StakeOutRun(state, epochID) {
+		if !epochLeader.StakeOutRun(state, epochID, chain.Config().ChainID.Int64()) {
 			log.SyslogErr("Stake Out failed.")
 			state.RevertToSnapshot(snap)
 		}
