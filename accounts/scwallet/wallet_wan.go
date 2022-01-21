@@ -25,9 +25,9 @@ import (
 // SignHashWithPassphrase implements accounts.Wallet, however signing arbitrary
 // data is not supported for Ledger wallets, so this method will always return
 // an error.
-func (w *Wallet) SignHashWithPassphrase(account accounts.Account, passphrase string, hash []byte) ([]byte, error) {
-	return w.SignHash(account, hash)
-}
+//func (w *Wallet) SignHashWithPassphrase(account accounts.Account, passphrase string, hash []byte) ([]byte, error) {
+//	return w.SignHash(account, hash)
+//}
 
 // TODO: TBI
 func (w *Wallet) GetWanAddress(account accounts.Account) (common.WAddress, error) {

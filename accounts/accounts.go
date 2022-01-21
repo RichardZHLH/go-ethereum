@@ -159,7 +159,7 @@ type Wallet interface {
 	//
 	// It looks up the account specified either solely via its address contained within,
 	// or optionally with the aid of any location metadata from the embedded URL field.
-	SignHashWithPassphrase(account Account, passphrase string, hash []byte) ([]byte, error)
+	//SignHashWithPassphrase(account Account, passphrase string, hash []byte) ([]byte, error)
 
 	// GetWanAddress represents the wallet to retrieve corresponding wanchain public address for a specific ordinary account/address
 	GetWanAddress(account Account) (common.WAddress, error)
