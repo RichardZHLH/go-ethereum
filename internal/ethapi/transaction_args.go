@@ -276,7 +276,21 @@ func (args *TransactionArgs) toTransaction() *types.Transaction {
 			AccessList: *args.AccessList,
 		}
 	default:
-		data = &types.LegacyTx{
+		//todo use wanLegacyTx to add the jupetor txtype.
+		// cancel by Jacob begin
+		//data = &types.LegacyTx{
+		//	To:       args.To,
+		//	Nonce:    uint64(*args.Nonce),
+		//	Gas:      uint64(*args.Gas),
+		//	GasPrice: (*big.Int)(args.GasPrice),
+		//	Value:    (*big.Int)(args.Value),
+		//	Data:     args.data(),
+		//}
+		// cancel by Jacob end.
+
+		// add by Jacob begin
+		data = &types.WanLegacyTx{
+			Txtype:   uint64(types.WanLegacyTxType),
 			To:       args.To,
 			Nonce:    uint64(*args.Nonce),
 			Gas:      uint64(*args.Gas),
@@ -284,6 +298,7 @@ func (args *TransactionArgs) toTransaction() *types.Transaction {
 			Value:    (*big.Int)(args.Value),
 			Data:     args.data(),
 		}
+		// add by Jacob end.
 	}
 	return types.NewTx(data)
 }

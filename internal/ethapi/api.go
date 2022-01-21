@@ -43,6 +43,7 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/p2p"
 	"github.com/ethereum/go-ethereum/params"
+	posutil "github.com/ethereum/go-ethereum/pos/util"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/tyler-smith/go-bip39"
@@ -606,6 +607,8 @@ func NewPublicBlockChainAPI(b Backend) *PublicBlockChainAPI {
 	return &PublicBlockChainAPI{b}
 }
 
+// cancel by Jacob begin
+/*
 // ChainId is the EIP-155 replay-protection chain id for the current ethereum chain config.
 func (api *PublicBlockChainAPI) ChainId() (*hexutil.Big, error) {
 	// if current block is at or past the EIP-155 replay-protection fork block, return chainID from config
@@ -614,6 +617,8 @@ func (api *PublicBlockChainAPI) ChainId() (*hexutil.Big, error) {
 	}
 	return nil, fmt.Errorf("chain not synced beyond EIP-155 replay-protection fork block")
 }
+// cancel by Jacob end
+*/
 
 // BlockNumber returns the block number of the chain head.
 func (s *PublicBlockChainAPI) BlockNumber() hexutil.Uint64 {
@@ -1236,6 +1241,14 @@ func RPCMarshalBlock(block *types.Block, inclTx bool, fullTx bool, config *param
 	}
 	fields["uncles"] = uncleHashes
 
+	// add by Jacob begin
+	if block.NumberU64() >= config.PosFirstBlock.Uint64() {
+		epochid, slotid := posutil.CalEpSlbyTd(block.Difficulty().Uint64())
+		fields["epochId"] = epochid
+		fields["slotId"] = slotid
+	}
+	// add by Jacob end
+
 	return fields, nil
 }
 
@@ -1750,11 +1763,29 @@ func (s *PublicTransactionPoolAPI) FillTransaction(ctx context.Context, args Tra
 // SendRawTransaction will add the signed transaction to the transaction pool.
 // The sender is responsible for signing the transaction and using the correct nonce.
 func (s *PublicTransactionPoolAPI) SendRawTransaction(ctx context.Context, input hexutil.Bytes) (common.Hash, error) {
+	// todo add jupetor fork (txtype)
 	tx := new(types.Transaction)
 	if err := tx.UnmarshalBinary(input); err != nil {
 		return common.Hash{}, err
 	}
-	return SubmitTransaction(ctx, s.b, tx)
+
+	tx1 := tx
+	fmt.Println("infoxxxxxxxxxxxxxxx:", tx.IsLegacyType() , posutil.IsJupiterForkArrived() , types.IsEthereumTx(tx.ChainId().Uint64()))
+	if types.IsEthereumTx(tx.ChainId().Uint64()) && tx.IsLegacyType() && posutil.IsJupiterForkArrived() {
+		data := &types.WanLegacyTx{
+			Txtype:   uint64(types.JUPITER_TX),
+			To:       tx.To(),
+			Nonce:    tx.Nonce(),
+			Gas:      tx.Gas(),
+			GasPrice: tx.GasPrice(),
+			Value:    tx.Value(),
+			Data:     tx.Data(),
+		}
+		data.V, data.R, data.S = tx.RawSignatureValues()
+		tx1 = types.NewTx(data)
+
+	}
+	return SubmitTransaction(ctx, s.b, tx1)
 }
 
 // Sign calculates an ECDSA signature for:

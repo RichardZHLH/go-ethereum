@@ -120,6 +120,8 @@ func (miner *Miner) update() {
 			}
 			switch ev.Data.(type) {
 			case downloader.StartEvent:
+				//todo should delete log
+				log.Info("Miner::update StartEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase, "canStart", canStart, "wasMining", miner.Mining())
 				wasMining := miner.Mining()
 				miner.worker.stop()
 				canStart = false
@@ -130,15 +132,21 @@ func (miner *Miner) update() {
 				}
 			case downloader.FailedEvent:
 				canStart = true
+				//todo should delete log
+				log.Info("Miner::update FailedEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase)
 				if shouldStart {
 					miner.SetEtherbase(miner.coinbase)
 					miner.worker.start()
+					miner.invokePosTimeLoop() // add by Jacob
 				}
 			case downloader.DoneEvent:
 				canStart = true
+				//todo should delete log
+				log.Info("Miner::update DoneEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase)
 				if shouldStart {
 					miner.SetEtherbase(miner.coinbase)
 					miner.worker.start()
+					miner.invokePosTimeLoop() // add by Jacob
 				}
 				// Stop reacting to downloader events
 				events.Unsubscribe()
@@ -147,6 +155,7 @@ func (miner *Miner) update() {
 			miner.SetEtherbase(addr)
 			if canStart {
 				miner.worker.start()
+				//miner.Start(miner.coinbase) // add by Jacob
 			}
 			shouldStart = true
 		case <-miner.stopCh:
@@ -160,8 +169,20 @@ func (miner *Miner) update() {
 }
 
 func (miner *Miner) Start(coinbase common.Address) {
+
+	miner.coinbase = coinbase // add by Jacob
 	miner.startCh <- coinbase
-	if miner.eth.BlockChain().Config().IsPosActive || miner.eth.BlockChain().IsInPosStage() {
+	miner.invokePosTimeLoop()
+}
+
+func (miner *Miner) invokePosTimeLoop() {
+	if miner.eth.BlockChain().Config().IsPosActive {
+		log.Info("Invoke backendTimerLoop from miner start, pos active")
+		go miner.backendTimerLoop(miner.eth)
+	} else if !miner.eth.BlockChain().IsInPosStage() {
+		miner.worker.commitNewWork(nil, true, 0) //todo check the first parameters.
+	} else {
+		log.Info("Invoke backendTimerLoop from miner start, in PosStage")
 		go miner.backendTimerLoop(miner.eth)
 	}
 }
@@ -257,7 +278,7 @@ func (self *Miner) SwitchEngine(engine consensus.Engine) {
 	//time.Sleep(1000*time.Millisecond)
 	log.Info("SwitchEngine")
 	if posconfig.MineEnabled {
-		log.Info("SwitchEngine, start backendTimerLoop")
+		log.Info("Invoke backendTimerLoop by SwitchEngine")
 		go self.backendTimerLoop(self.eth)
 	}
 }

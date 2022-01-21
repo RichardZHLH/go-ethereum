@@ -99,11 +99,11 @@ func (s *SLS) VerifySlotProof(block *types.Block, epochID uint64, slotID uint64,
 		}
 
 		log.Debug("VerifySlotLeaderProofskGT aphaiPki", "index", index, "epochID", epochID, "slotID", slotID)
-		log.Debug("VerifySlotLeaderProofskGT", "epochID", epochID, "slotID", slotID, "slotLeaderRb", rbBytes[:])
+		log.Debug("VerifySlotLeaderProofskGT", "epochID", epochID, "slotID", slotID, "slotLeaderRb", hex.EncodeToString(rbBytes[:]))
 
 		smaPiecesHexStr := make([]string, 0)
 		for _, value := range smaPieces {
-			smaPiecesHexStr = append(smaPiecesHexStr, hex.EncodeToString(crypto.FromECDSAPub(value)))
+			smaPiecesHexStr = append(smaPiecesHexStr, hex.EncodeToString(crypto.FromECDSAPub(value)[:4]))
 		}
 		log.Debug("VerifySlotLeaderProof", "epochID", epochID, "slotID", slotID, "smaPiecesHexStr", smaPiecesHexStr)
 
@@ -194,7 +194,24 @@ func (s *SLS) getSlotLeaderProofByGenesis(PrivateKey *ecdsa.PrivateKey, epochID 
 		if !isDefault && !isGenesis {
 			return s.getSlotLeaderProof(PrivateKey, epRecovery, slotID)
 		}
+
+		// add by Jacob begin
+		// preEpochLeader exsist but build SMA error.
+		if !isDefault && isGenesis {
+			return s.getSlotLeaderProofByGenesis(PrivateKey, epRecovery, slotID)
+		}
+		// preEpochLeader exsist but build SMA error.
+		if isDefault && isGenesis {
+			goto genesisDeault
+		}
+		if isDefault && !isGenesis {
+			log.Error("getSlotLeaderProof Mars should never come here")
+			//todo panic or not?
+		}
+		// add by Jacob end
 	}
+
+genesisDeault:
 
 	epochID = 0
 
@@ -230,20 +247,26 @@ func (s *SLS) getSlotLeaderProof(PrivateKey *ecdsa.PrivateKey, epochID uint64,
 	rbPtr, _ = s.getRandom(nil, epochID)
 	rbBytes := rbPtr.Bytes()
 
-	log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID)
-	log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID, "slotLeaderRb", hex.EncodeToString(rbBytes))
+	//log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID)
+	//log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID, "slotLeaderRb", hex.EncodeToString(rbBytes))
 
 	epochLeadersHexStr := make([]string, 0)
 	for _, value := range epochLeadersPtrPre {
-		epochLeadersHexStr = append(epochLeadersHexStr, hex.EncodeToString(crypto.FromECDSAPub(value)))
+		epochLeadersHexStr = append(epochLeadersHexStr, hex.EncodeToString(crypto.FromECDSAPub(value)[:4]))
 	}
-	log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID, "epochLeadersHexStr", epochLeadersHexStr)
+	//log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID, "epochLeadersHexStr", epochLeadersHexStr)
 
 	smaPiecesHexStr := make([]string, 0)
 	for _, value := range smaPiecesPtr {
-		smaPiecesHexStr = append(smaPiecesHexStr, hex.EncodeToString(crypto.FromECDSAPub(value)))
+		smaPiecesHexStr = append(smaPiecesHexStr, hex.EncodeToString(crypto.FromECDSAPub(value)[:4]))
 	}
-	log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID, "smaPiecesHexStr", smaPiecesHexStr)
+
+	//log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID, "smaPiecesHexStr", smaPiecesHexStr)
+
+	log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID,
+		"slotLeaderRb", hex.EncodeToString(rbBytes),
+		"epochLeadersHexStr", epochLeadersHexStr,
+		"smaPiecesHexStr", smaPiecesHexStr)
 
 	profMeg, proof, err := uleaderselection.GenerateSlotLeaderProof(PrivateKey, smaPiecesPtr, epochLeadersPtrPre,
 		rbBytes[:], slotID, epochID)

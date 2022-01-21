@@ -129,15 +129,16 @@ func MustSignNewTx(prv *ecdsa.PrivateKey, s Signer, txdata TxData) *Transaction 
 // signing method. The cache is invalidated if the cached signer does
 // not match the signer used in the current call.
 func Sender(signer Signer, tx *Transaction) (common.Address, error) {
-	if sc := tx.from.Load(); sc != nil {
-		sigCache := sc.(sigCache)
-		// If the signer used to derive from in a previous
-		// call is not the same as used current, invalidate
-		// the cache.
-		if sigCache.signer.Equal(signer) {
-			return sigCache.from, nil
-		}
-	}
+	//todo need uncomment below
+	//if sc := tx.from.Load(); sc != nil {
+	//	sigCache := sc.(sigCache)
+	//	// If the signer used to derive from in a previous
+	//	// call is not the same as used current, invalidate
+	//	// the cache.
+	//	if sigCache.signer.Equal(signer) {
+	//		return sigCache.from, nil
+	//	}
+	//}
 
 	addr, err := signer.Sender(tx)
 	if err != nil {
@@ -189,7 +190,9 @@ func (s londonSigner) Sender(tx *Transaction) (common.Address, error) {
 	// DynamicFee txs are defined to use 0 and 1 as their recovery
 	// id, add 27 to become equivalent to unprotected Homestead signatures.
 	V = new(big.Int).Add(V, big.NewInt(27))
-	if tx.ChainId().Cmp(s.chainId) != 0 {
+	fmt.Println("s.chainId:",s.chainId)
+	fmt.Println("tx.ChainId:", tx.ChainId())
+	if tx.ChainId().Cmp(new(big.Int).SetUint64(params.JupiterChainId(s.chainId.Uint64())) ) != 0 {
 		return common.Address{}, ErrInvalidChainId
 	}
 	return recoverPlain(s.Hash(tx), R, S, V, true)
@@ -224,7 +227,7 @@ func (s londonSigner) Hash(tx *Transaction) common.Hash {
 	return prefixedRlpHash(
 		tx.Type(),
 		[]interface{}{
-			s.chainId,
+			params.JupiterChainId(s.chainId.Uint64()),
 			tx.Nonce(),
 			tx.GasTipCap(),
 			tx.GasFeeCap(),
@@ -254,26 +257,9 @@ func (s eip2930Signer) Equal(s2 Signer) bool {
 }
 
 func (s eip2930Signer) Sender(tx *Transaction) (common.Address, error) {
-	V, R, S := tx.RawSignatureValues()
-	switch tx.Type() {
-	case LegacyTxType:
-		if !tx.Protected() {
-			return HomesteadSigner{}.Sender(tx)
-		}
-		V = new(big.Int).Sub(V, s.chainIdMul)
-		V.Sub(V, big8)
-	case AccessListTxType:
-		// AL txs are defined to use 0 and 1 as their recovery
-		// id, add 27 to become equivalent to unprotected Homestead signatures.
-		V = new(big.Int).Add(V, big.NewInt(27))
-	default:
-		return common.Address{}, ErrTxTypeNotSupported
-	}
-	if tx.ChainId().Cmp(s.chainId) != 0 {
-		return common.Address{}, ErrInvalidChainId
-	}
-	return recoverPlain(s.Hash(tx), R, S, V, true)
+	return s.EIP155Signer.Sender(tx)
 }
+
 
 func (s eip2930Signer) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big.Int, err error) {
 	switch txdata := tx.inner.(type) {
@@ -362,7 +348,7 @@ func (s EIP155Signer) Equal(s2 Signer) bool {
 var big8 = big.NewInt(8)
 
 func (s EIP155Signer) Sender(tx *Transaction) (common.Address, error) {
-	if tx.Type() != LegacyTxType && tx.Type() != WanLegacyTxType && tx.Type() != WanTestnetTxType && tx.Type() != WanPosTxType && tx.Type() != WanPrivTxType && tx.Type() !=WanJupiterTxType {
+	if !tx.IsValidType() {
 		return common.Address{}, ErrTxTypeNotSupported
 	}
 	if !tx.Protected() {
@@ -375,11 +361,13 @@ func (s EIP155Signer) Sender(tx *Transaction) (common.Address, error) {
 		return common.Address{}, ErrInvalidChainId
 	}
 
-	if IsEthereumTx(tx.Type()) && tx.ChainId().Cmp(s.chainId) == 0 && params.IsOldChainId(s.chainId.Uint64()) {
+	if IsEthereumTx(tx.ChainId().Uint64()) && tx.ChainId().Cmp(s.chainId) == 0 && params.IsOldChainId(s.chainId.Uint64()) {
 		return common.Address{}, ErrInvalidChainId
 	}
 
-	if !IsEthereumTx(tx.Type()) && tx.ChainId().Uint64() == params.JupiterChainId(s.chainId.Uint64()) {
+	if !IsEthereumTx(tx.ChainId().Uint64()) && tx.ChainId().Uint64() == params.JupiterChainId(s.chainId.Uint64()) {
+		fmt.Println("IsEthereumTx(tx.Type()):",IsEthereumTx(tx.ChainId().Uint64()))
+		fmt.Println("tx.Type():", tx.Type())
 		return common.Address{}, ErrInvalidChainId
 	}
 
@@ -398,7 +386,7 @@ func (s EIP155Signer) Sender(tx *Transaction) (common.Address, error) {
 // SignatureValues returns signature values. This signature
 // needs to be in the [R || S || V] format where V is 0 or 1.
 func (s EIP155Signer) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big.Int, err error) {
-	if tx.Type() != LegacyTxType && tx.Type() != WanLegacyTxType && tx.Type() != WanTestnetTxType && tx.Type() != WanPosTxType && tx.Type() != WanPrivTxType && tx.Type() !=WanJupiterTxType {
+	if !tx.IsValidType() {
 		return nil, nil, nil, ErrTxTypeNotSupported
 	}
 	R, S, V = decodeSignature(sig)
@@ -419,7 +407,7 @@ func (s EIP155Signer) Hash(tx *Transaction) common.Hash {
 		chainId = big.NewInt(0).SetUint64(params.JupiterChainId(s.chainId.Uint64()))
 	}
 
-	if IsEthereumTx(tx.Type()) {
+	if IsEthereumTx(tx.ChainId().Uint64()) {
 		return rlpHash([]interface{}{
 			tx.Nonce(),
 			tx.GasPrice(),
@@ -463,7 +451,7 @@ func (hs HomesteadSigner) SignatureValues(tx *Transaction, sig []byte) (r, s, v 
 }
 
 func (hs HomesteadSigner) Sender(tx *Transaction) (common.Address, error) {
-	if tx.Type() != LegacyTxType && tx.Type() != WanLegacyTxType && tx.Type() != WanTestnetTxType && tx.Type() != WanPosTxType && tx.Type() != WanPrivTxType && tx.Type() !=WanJupiterTxType {
+	if !tx.IsValidType() {
 		return common.Address{}, ErrTxTypeNotSupported
 	}
 	v, r, s := tx.RawSignatureValues()

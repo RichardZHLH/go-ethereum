@@ -151,6 +151,21 @@ type Wallet interface {
 
 	// SignTxWithPassphrase is identical to SignTx, but also takes a password
 	SignTxWithPassphrase(account Account, passphrase string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
+
+	// SignHash(account Account, hash []byte) ([]byte, error)
+
+	// SignHashWithPassphrase requests the wallet to sign the given hash with the
+	// given passphrase as extra authentication information.
+	//
+	// It looks up the account specified either solely via its address contained within,
+	// or optionally with the aid of any location metadata from the embedded URL field.
+	//SignHashWithPassphrase(account Account, passphrase string, hash []byte) ([]byte, error)
+
+	// GetWanAddress represents the wallet to retrieve corresponding wanchain public address for a specific ordinary account/address
+	GetWanAddress(account Account) (common.WAddress, error)
+
+	// ComputeOTAPPKeys returns one-time-address pair
+	ComputeOTAPPKeys(account Account, AX, AY, BX, BY string) ([]string, error)
 }
 
 // Backend is a "wallet provider" that may contain a batch of accounts they can

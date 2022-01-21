@@ -441,13 +441,20 @@ func (d *Downloader) getMode() SyncMode {
 // syncWithPeer starts a block synchronization based on the hash chain from the
 // specified peer and head hash.
 func (d *Downloader) syncWithPeer(p *peerConnection, hash common.Hash, td *big.Int) (err error) {
+
+	log.Debug("syncWithPeer xxxxxxxxxxxxxxxxxxxx StartEvent xxxxxxxxxxxxxxxxxxxxxxxxx")
+
+	//todo should post startEvent{}
 	d.mux.Post(StartEvent{})
 	defer func() {
 		// reset on error
 		if err != nil {
+			log.Debug("syncWithPeer xxxxxxxxxxxxxxxxxxxx FailedEvent xxxxxxxxxxxxxxxxxxxxxxxxx")
 			d.mux.Post(FailedEvent{err})
 		} else {
 			latest := d.lightchain.CurrentHeader()
+
+			log.Debug("syncWithPeer xxxxxxxxxxxxxxxxxxxx DoneEvent xxxxxxxxxxxxxxxxxxxxxxxxx")
 			d.mux.Post(DoneEvent{latest})
 		}
 	}()
@@ -1038,10 +1045,12 @@ func (d *Downloader) fetchHeaders(p *peerConnection, from uint64) error {
 		timeout.Reset(ttl)
 
 		if skeleton {
-			p.log.Trace("Fetching skeleton headers", "count", MaxHeaderFetch, "from", from)
+			//p.log.Trace("Fetching skeleton headers", "count", MaxHeaderFetch, "from", from)
+			p.log.Debug("Fetching skeleton headers", "count", MaxHeaderFetch, "from", from)
 			go p.peer.RequestHeadersByNumber(from+uint64(MaxHeaderFetch)-1, MaxSkeletonSize, MaxHeaderFetch-1, false)
 		} else {
-			p.log.Trace("Fetching full headers", "count", MaxHeaderFetch, "from", from)
+			//p.log.Trace("Fetching full headers", "count", MaxHeaderFetch, "from", from)
+			p.log.Debug("Fetching full headers", "count", MaxHeaderFetch, "from", from)
 			go p.peer.RequestHeadersByNumber(from, MaxHeaderFetch, 0, false)
 		}
 	}
@@ -1285,7 +1294,7 @@ func (d *Downloader) fillHeaderSkeleton(from uint64, skeleton []*types.Header) (
 // available peers, reserving a chunk of blocks for each, waiting for delivery
 // and also periodically checking for timeouts.
 func (d *Downloader) fetchBodies(from uint64) error {
-	log.Debug("Downloading block bodies", "origin", from)
+	log.Debug("fetchBodies Downloading block bodies", "origin", from)
 
 	var (
 		deliver = func(packet dataPack) (int, error) {
@@ -1309,7 +1318,7 @@ func (d *Downloader) fetchBodies(from uint64) error {
 // available peers, reserving a chunk of receipts for each, waiting for delivery
 // and also periodically checking for timeouts.
 func (d *Downloader) fetchReceipts(from uint64) error {
-	log.Debug("Downloading transaction receipts", "origin", from)
+	log.Debug("fetchReceipts Downloading transaction receipts", "origin", from)
 
 	var (
 		deliver = func(packet dataPack) (int, error) {
@@ -1327,7 +1336,7 @@ func (d *Downloader) fetchReceipts(from uint64) error {
 		d.queue.PendingReceipts, d.queue.InFlightReceipts, d.queue.ReserveReceipts,
 		d.receiptFetchHook, fetch, d.queue.CancelReceipts, capacity, d.peers.ReceiptIdlePeers, setIdle, "receipts")
 
-	log.Debug("Transaction receipt download terminated", "err", err)
+	log.Debug("fetchReceipts Transaction receipt download terminated", "err", err)
 	return err
 }
 

@@ -1054,23 +1054,44 @@ func (ethash *Pluto) SealHash(header *types.Header) (hash common.Hash) {
 
 	hasher := sha3.NewLegacyKeccak256()
 
+	/*
+		rlp.Encode(hasher, []interface{}{
+			header.ParentHash,
+			header.UncleHash,
+			//header.Coinbase,
+			header.Root,
+			header.TxHash,
+			header.ReceiptHash,
+			header.Bloom,
+			header.Difficulty,
+			header.Number,
+			header.GasLimit,
+			header.GasUsed,
+			header.Time,
+			//header.Extra[:len(header.Extra)-extraSeal], // Yes, this will panic if extra is too short
+			header.MixDigest,
+			header.Nonce,
+		})
+	*/
+// TODO the hash field is not enough.
 	rlp.Encode(hasher, []interface{}{
 		header.ParentHash,
-		header.UncleHash,
-		//header.Coinbase,
-		header.Root,
-		header.TxHash,
-		header.ReceiptHash,
-		header.Bloom,
-		header.Difficulty,
+		//header.UncleHash,
+		////header.Coinbase,
+		//header.Root,
+		//header.TxHash,
+		//header.ReceiptHash,
+		//header.Bloom,
+		//header.Difficulty,
 		header.Number,
-		header.GasLimit,
-		header.GasUsed,
-		header.Time,
-		//header.Extra[:len(header.Extra)-extraSeal], // Yes, this will panic if extra is too short
-		header.MixDigest,
-		header.Nonce,
+		//header.GasLimit,
+		//header.GasUsed,
+		//header.Time,
+		////header.Extra[:len(header.Extra)-extraSeal], // Yes, this will panic if extra is too short
+		//header.MixDigest,
+		//header.Nonce,
 	})
+
 	hasher.Sum(hash[:0])
 	return hash
 

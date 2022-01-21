@@ -19,6 +19,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/ethereum/go-ethereum/pos/posconfig"
 	"os"
 	"sort"
 	"strconv"
@@ -401,6 +402,9 @@ func startNode(ctx *cli.Context, stack *node.Node, backend ethapi.Backend) {
 
 	// Start auxiliary services if enabled
 	if ctx.GlobalBool(utils.MiningEnabledFlag.Name) || ctx.GlobalBool(utils.DeveloperFlag.Name) {
+
+		posconfig.MineEnabled = true // add by Jacob
+
 		// Mining only makes sense if a full Ethereum node is running
 		if ctx.GlobalString(utils.SyncModeFlag.Name) == "light" {
 			utils.Fatalf("Light clients do not support mining")
@@ -435,9 +439,11 @@ func unlockAccounts(ctx *cli.Context, stack *node.Node) {
 	}
 	// If insecure account unlocking is not allowed if node's APIs are exposed to external.
 	// Print warning log to user and skip unlocking.
-	if !stack.Config().InsecureUnlockAllowed && stack.Config().ExtRPCEnabled() {
-		utils.Fatalf("Account unlock with HTTP access is forbidden!")
-	}
+
+	//todo should uncomment below
+	//if !stack.Config().InsecureUnlockAllowed && stack.Config().ExtRPCEnabled() {
+	//	utils.Fatalf("Account unlock with HTTP access is forbidden!")
+	//}
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
 	passwords := utils.MakePasswordList(ctx)
 	for i, account := range unlocks {

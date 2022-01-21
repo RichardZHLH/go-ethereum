@@ -95,6 +95,10 @@ func (w *keystoreWallet) signHash(account accounts.Account, hash []byte) ([]byte
 	return w.keystore.SignHash(account, hash)
 }
 
+func (w *keystoreWallet) SignHash(account accounts.Account, hash []byte) ([]byte, error) {
+	return w.signHash(account, hash)
+}
+
 // SignData signs keccak256(data). The mimetype parameter describes the type of data being signed.
 func (w *keystoreWallet) SignData(account accounts.Account, mimeType string, data []byte) ([]byte, error) {
 	return w.signHash(account, crypto.Keccak256(data))
@@ -150,20 +154,6 @@ func (w *keystoreWallet) SignTxWithPassphrase(account accounts.Account, passphra
 	// Account seems valid, request the keystore to sign
 	return w.keystore.SignTxWithPassphrase(account, passphrase, tx, chainID)
 }
-
-// TODO MERGE need it??
-// GetWanAddress represents the wallet to retrieve corresponding wanchain public address for a specific ordinary account/address
-//func (w *keystoreWallet) GetWanAddress(account accounts.Account) (common.WAddress, error) {
-//	// Make sure the requested account is contained within
-//	if account.Address != w.account.Address {
-//		return common.WAddress{}, accounts.ErrUnknownAccount
-//	}
-//	if account.URL != (accounts.URL{}) && account.URL != w.account.URL {
-//		return common.WAddress{}, accounts.ErrUnknownAccount
-//	}
-//	// Account seems valid, request the keystore to retrieve
-//	return w.keystore.GetWanAddress(account)
-//}
 
 func (w *keystoreWallet) GetUnlockedKey(address common.Address) (*Key, error) {
 	value, ok := w.keystore.unlocked[address]

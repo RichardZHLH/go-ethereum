@@ -27,6 +27,8 @@ var (
 	MineEnabled  = false
 
 	ChainId = uint64(0)
+
+	LondonForked bool = true
 )
 
 const (
@@ -116,6 +118,7 @@ const (
 	// After Jupiter fork, wanchain support ethereum tx and wallet.
 	MainnetJupiterEpochId = 18732
 	TestnetJupiterEpochId = 18698
+	PlutoJupiterEpochId = 0
 
 	TARGETS_LOCKED_EPOCH = 90 //90 DAYS,90 EPOCH
 	RETURN_DIVIDE        = 10000
@@ -179,7 +182,7 @@ var DefaultConfig = Config{
 	0,
 	0,
 	0,
-	nil,
+	big.NewInt(int64(params.GWei)), // add by Jacob
 
 	0,
 }
@@ -243,7 +246,7 @@ func Init(nodeCfg *node.Config, networkId uint64) {
 		DefaultConfig.MercuryEpochId = TestnetMercuryEpochId
 		DefaultConfig.VenusEpochId = TestnetVenusEpochId
 		DefaultConfig.MarsEpochId = TestnetMarsEpochId
-		DefaultConfig.JupiterEpochId = TestnetJupiterEpochId
+		DefaultConfig.JupiterEpochId = PlutoJupiterEpochId
 	} else if networkId == params.INTERNAL_CHAIN_ID {
 		PosOwnerAddr = PosOwnerAddrInternal
 		// TODO: for debug set to WhiteListOrig -> WhiteListDev

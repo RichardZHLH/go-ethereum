@@ -40,7 +40,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/pbkdf2"
@@ -181,6 +180,7 @@ func EncryptDataV3(data, auth []byte, scryptN, scryptP int) (CryptoJSON, error) 
 	return cryptoStruct, nil
 }
 
+/* cancel by jacob begin
 // EncryptKey encrypts a key using the specified scrypt parameters into a json
 // blob that can be decrypted later on.
 func EncryptKey(key *Key, auth string, scryptN, scryptP int) ([]byte, error) {
@@ -197,6 +197,36 @@ func EncryptKey(key *Key, auth string, scryptN, scryptP int) ([]byte, error) {
 	}
 	return json.Marshal(encryptedKeyJSONV3)
 }
+cancel by Jacob end*/
+
+// add by Jacob begin
+func EncryptKey(key *Key, auth string, scryptN, scryptP int) ([]byte, error) {
+	if key == nil {
+		return nil, ErrInvalidAccountKey
+	}
+
+	cryptoStruct, err := EncryptOnePrivateKey(key.PrivateKey, auth, scryptN, scryptP)
+	if err != nil {
+		return nil, err
+	}
+
+	cryptoStruct2, err := EncryptOnePrivateKey(key.PrivateKey2, auth, scryptN, scryptP)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedKeyJSONV3 := encryptedKeyJSONV3{
+		key.Address.Hex()[2:],
+		*cryptoStruct,
+		*cryptoStruct2,
+		key.Id.String(),
+		version,
+		hex.EncodeToString(key.WAddress[:]),
+	}
+	return json.Marshal(encryptedKeyJSONV3)
+}
+
+// add by Jacob end
 
 // DecryptKey decrypts a key from a json blob, returning the private key itself.
 func DecryptKey(keyjson []byte, auth string) (*Key, error) {
@@ -207,8 +237,9 @@ func DecryptKey(keyjson []byte, auth string) (*Key, error) {
 	}
 	// Depending on the version try to parse one way or another
 	var (
-		keyBytes, keyId []byte
-		err             error
+		keyBytes, keyBytes2, keyId []byte
+		err                        error
+		waddressStr                *string
 	)
 	if version, ok := m["version"].(string); ok && version == "1" {
 		k := new(encryptedKeyJSONV1)
@@ -221,21 +252,37 @@ func DecryptKey(keyjson []byte, auth string) (*Key, error) {
 		if err := json.Unmarshal(keyjson, k); err != nil {
 			return nil, err
 		}
-		keyBytes, keyId, err = decryptKeyV3(k, auth)
+		keyBytes, keyBytes2, keyId, err = decryptKeyV3(k, auth)
+		if err != nil {
+			return nil, err
+		}
+
+		waddressStr = &k.WAddress
 	}
 	// Handle any decryption errors and return the key
 	if err != nil {
 		return nil, err
 	}
 	key := crypto.ToECDSAUnsafe(keyBytes)
+	key2 := crypto.ToECDSAUnsafe(keyBytes2)
+
+	waddressRaw, err := hex.DecodeString(*waddressStr)
+	if err != nil {
+		return nil, err
+	}
+	var waddress common.WAddress
+	copy(waddress[:], waddressRaw)
+
 	id, err := uuid.FromBytes(keyId)
 	if err != nil {
 		return nil, err
 	}
 	return &Key{
-		Id:         id,
-		Address:    crypto.PubkeyToAddress(key.PublicKey),
-		PrivateKey: key,
+		Id:          id,
+		Address:     crypto.PubkeyToAddress(key.PublicKey),
+		PrivateKey:  key,
+		PrivateKey2: key2,
+		WAddress:    waddress,
 	}, nil
 }
 
@@ -275,6 +322,7 @@ func DecryptDataV3(cryptoJson CryptoJSON, auth string) ([]byte, error) {
 	return plainText, err
 }
 
+/* cancel by Jacob begin
 func decryptKeyV3(keyProtected *encryptedKeyJSONV3, auth string) (keyBytes []byte, keyId []byte, err error) {
 	if keyProtected.Version != version {
 		return nil, nil, fmt.Errorf("version not supported: %v", keyProtected.Version)
@@ -289,6 +337,33 @@ func decryptKeyV3(keyProtected *encryptedKeyJSONV3, auth string) (keyBytes []byt
 		return nil, nil, err
 	}
 	return plainText, keyId, err
+}
+cancel by Jacob end*/
+
+func decryptKeyV3(keyProtected *encryptedKeyJSONV3, auth string) (keyBytes []byte, keyBytes2 []byte, keyId []byte, err error) {
+	if keyProtected.Version != version {
+		return nil, nil, nil, fmt.Errorf("Version not supported: %v", keyProtected.Version)
+	}
+	keyUUID, err := uuid.Parse(keyProtected.Id)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	keyId = keyUUID[:]
+	plainText, err := decryptKeyV3Item(keyProtected.Crypto, auth)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	plainText2, err2 := decryptKeyV3Item(keyProtected.Crypto2, auth)
+	if err2 != nil {
+		if "" == keyProtected.Crypto2.Cipher {
+			plainText2 = make([]byte, 0)
+		} else {
+			return nil, nil, nil, err2
+		}
+	}
+
+	return plainText, plainText2, keyId, err
 }
 
 func decryptKeyV1(keyProtected *encryptedKeyJSONV1, auth string) (keyBytes []byte, keyId []byte, err error) {

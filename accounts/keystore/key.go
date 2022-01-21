@@ -55,6 +55,13 @@ type keyStore interface {
 	StoreKey(filename string, k *Key, auth string) error
 	// Joins filename with the key directory unless it is already absolute.
 	JoinPath(filename string) string
+
+	// add by Jacob begin
+	// Decrypts the key from keyjson
+	GetKeyFromKeyJson(addr common.Address, keyjson []byte, auth string) (*Key, error)
+	// Loads an encrypted keyfile from disk
+	GetEncryptedKey(addr common.Address, filename string) (*Key, error)
+	// add by Jacob end
 }
 
 type plainKeyJSON struct {
@@ -65,10 +72,13 @@ type plainKeyJSON struct {
 }
 
 type encryptedKeyJSONV3 struct {
-	Address string     `json:"address"`
-	Crypto  CryptoJSON `json:"crypto"`
-	Id      string     `json:"id"`
-	Version int        `json:"version"`
+	Address  string     `json:"address"`
+	Crypto   CryptoJSON `json:"crypto"`
+	Crypto2  CryptoJSON `json:"crypto2"` // add by Jacob
+	Id       string     `json:"id"`
+	Version  int        `json:"version"`
+	WAddress string     `json:"waddress"` // add by Jacob
+
 }
 
 type encryptedKeyJSONV1 struct {
@@ -93,7 +103,7 @@ type cipherparamsJSON struct {
 
 func (k *Key) MarshalJSON() (j []byte, err error) {
 	jStruct := plainKeyJSON{
-		hex.EncodeToString(k.Address[:]),
+		k.Address.Hex()[2:],
 		hex.EncodeToString(crypto.FromECDSA(k.PrivateKey)),
 		k.Id.String(),
 		version,

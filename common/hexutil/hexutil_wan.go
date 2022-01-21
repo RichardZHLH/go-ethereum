@@ -44,3 +44,7 @@ func PKPair2HexSlice(pk1 *ecdsa.PublicKey, pk2 *ecdsa.PublicKey) []string {
 		Encode(math.PaddedBigBytes(pk2.Y, 32)),
 	}
 }
+
+func Has0xPrefix(input string) bool {
+	return len(input) >= 2 && input[0] == '0' && (input[1] == 'x' || input[1] == 'X')
+}

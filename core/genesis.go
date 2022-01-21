@@ -22,21 +22,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/big"
-	"strings"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/trie"
+	"math/big"
+	"strings"
 )
 
 //go:generate gencodec -type Genesis -field-override genesisSpecMarshaling -out gen_genesis.go
@@ -80,12 +80,19 @@ func (ga *GenesisAlloc) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type GenesisAccountStaking struct {
+	Amount  *big.Int `json:"amount"`
+	S256pk  []byte   `json:"s256pk"`
+	Bn256pk []byte   `json:"bn256pk"`
+}
+
 // GenesisAccount is an account in the state of the genesis block.
 type GenesisAccount struct {
 	Code       []byte                      `json:"code,omitempty"`
 	Storage    map[common.Hash]common.Hash `json:"storage,omitempty"`
 	Balance    *big.Int                    `json:"balance" gencodec:"required"`
 	Nonce      uint64                      `json:"nonce,omitempty"`
+	Staking    GenesisAccountStaking       `json:"staking,omitempty"`
 	PrivateKey []byte                      `json:"secretKey,omitempty"` // for tests
 }
 
@@ -257,6 +264,7 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 
 // ToBlock creates the genesis block and writes state of a genesis specification
 // to the given database (or discards it if nil).
+/* cancel by Jacob begin
 func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 	if db == nil {
 		db = rawdb.NewMemoryDatabase()
@@ -306,6 +314,93 @@ func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 
 	return types.NewBlock(head, nil, nil, nil, trie.NewStackTrie(nil))
 }
+cancel by Jacob end*/
+
+// add by Jacob begin
+func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
+	if db == nil {
+		db = rawdb.NewMemoryDatabase()
+	}
+	statedb, err := state.New(common.Hash{}, state.NewDatabase(db), nil)
+	if err != nil {
+		panic(err)
+	}
+	for addr, account := range g.Alloc {
+		//todo need delete below log.Info
+		log.Info("ToBlock", "addr", hexutil.Encode(addr.Bytes()))
+		statedb.AddBalance(addr, account.Balance)
+		statedb.SetCode(addr, account.Code)
+		statedb.SetNonce(addr, account.Nonce)
+
+		if account.Staking.S256pk != nil {
+			pub := crypto.ToECDSAPub(account.Staking.S256pk)
+			if nil == pub {
+				panic("Invalid genesis.")
+			}
+			secAddr := crypto.PubkeyToAddress(*pub)
+			weight := vm.CalLocktimeWeight(vm.PSMinEpochNum)
+			staker := &vm.StakerInfo{
+				PubSec256:    account.Staking.S256pk,
+				PubBn256:     account.Staking.Bn256pk,
+				Amount:       account.Staking.Amount,
+				From:         secAddr,
+				Address:      secAddr,
+				LockEpochs:   0, // never expired
+				StakingEpoch: uint64(0),
+				FeeRate:      uint64(10000),
+			}
+			staker.StakeAmount = big.NewInt(0)
+			staker.StakeAmount.Mul(staker.Amount, big.NewInt(int64(weight)))
+			infoArray, err := rlp.EncodeToBytes(staker)
+			if err != nil {
+				panic(err)
+			}
+			addr := crypto.PubkeyToAddress(*crypto.ToECDSAPub(account.Staking.S256pk))
+			addrHash := common.BytesToHash(addr[:])
+			statedb.AddBalance(vm.WanCscPrecompileAddr, staker.Amount)
+
+			statedb.SetStateByteArray(vm.StakersInfoAddr, addrHash, infoArray)
+		}
+
+		for key, value := range account.Storage {
+			statedb.SetState(addr, key, value)
+		}
+	}
+	root := statedb.IntermediateRoot(false)
+	head := &types.Header{
+		Number:     new(big.Int).SetUint64(g.Number),
+		Nonce:      types.EncodeNonce(g.Nonce),
+		Time:       g.Timestamp,
+		ParentHash: g.ParentHash,
+		Extra:      g.ExtraData,
+		GasLimit:   g.GasLimit,
+		GasUsed:    g.GasUsed,
+		BaseFee:    g.BaseFee,
+		Difficulty: g.Difficulty,
+		MixDigest:  g.Mixhash,
+		Coinbase:   g.Coinbase,
+		Root:       root,
+	}
+	if g.GasLimit == 0 {
+		head.GasLimit = params.GenesisGasLimit
+	}
+	if g.Difficulty == nil {
+		head.Difficulty = params.GenesisDifficulty
+	}
+	if g.Config != nil && g.Config.IsLondon(common.Big0) {
+		if g.BaseFee != nil {
+			head.BaseFee = g.BaseFee
+		} else {
+			head.BaseFee = new(big.Int).SetUint64(params.InitialBaseFee)
+		}
+	}
+	statedb.Commit(false)
+	statedb.Database().TrieDB().Commit(root, true, nil)
+
+	return types.NewBlock(head, nil, nil, nil, trie.NewStackTrie(nil))
+}
+
+// add by Jacob end
 
 // Commit writes the block and state of a genesis specification to the database.
 // The block is committed as the canonical head block.

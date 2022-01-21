@@ -178,11 +178,12 @@ var (
 		EIP155Block:         big.NewInt(0),
 		EIP158Block:         big.NewInt(0),
 		ByzantiumBlock:      big.NewInt(0),
-		ConstantinopleBlock: big.NewInt(999_000_000_000),
-		PetersburgBlock:     big.NewInt(999_000_000_000),
-		IstanbulBlock:       big.NewInt(999_000_000_000),
-		MuirGlacierBlock:    big.NewInt(999_000_000_000),
-		BerlinBlock:         big.NewInt(999_000_000_000),
+		ConstantinopleBlock: big.NewInt(0),
+		PetersburgBlock:     big.NewInt(0),
+		IstanbulBlock:       big.NewInt(0),
+		MuirGlacierBlock:    big.NewInt(0),
+		BerlinBlock:         big.NewInt(0),
+		LondonBlock:         big.NewInt(0),
 		Ethash:              new(EthashConfig),
 
 		// add by Jacob
@@ -270,8 +271,9 @@ func (c *ChainConfig) IsPosBlockNumber(n *big.Int) bool {
 
 var (
 	isPosActive    = false
+	isLondonForked = true
 	TestnetChainId = TestnetChainConfig.ChainID.Int64()
-	MainnetChainId = WanchainChainConfig.ChainID.Int64()
+	MainnetChainId = MainnetChainConfig.ChainID.Int64()
 )
 
 func IsPosActive() bool {
@@ -279,6 +281,14 @@ func IsPosActive() bool {
 }
 
 func SetPosActive(active bool) {
+	isPosActive = active
+}
+
+func IsLondonActive() bool {
+	return isPosActive
+}
+
+func SetLondonActive(active bool) {
 	isPosActive = active
 }
 
