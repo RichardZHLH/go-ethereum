@@ -85,6 +85,7 @@ func DefaultPlutoGenesisBlock() *Genesis {
 	}
 }
 
+
 /*
 1 wanfoundation address:1０％,６％,３％
 

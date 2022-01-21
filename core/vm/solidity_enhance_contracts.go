@@ -425,6 +425,7 @@ var (
 	s256Addid            [4]byte
 	s256MulGid           [4]byte
 	checkSigid           [4]byte
+	checkSigid2          [4]byte
 	encid                [4]byte
 	hardCapid            [4]byte
 	s256MulPkid          [4]byte
@@ -445,21 +446,24 @@ func init() {
 		panic("err in csc abi initialize ")
 	}
 
-	copy(getPosAvgReturnId[:], solenhanceAbi.Methods["getPosAvgReturn"].Id())
-	copy(s256Addid[:], solenhanceAbi.Methods["add"].Id())
-	copy(s256MulGid[:], solenhanceAbi.Methods["mulG"].Id())
-	copy(checkSigid[:], solenhanceAbi.Methods["checkSigid"].Id())
-	copy(encid[:], solenhanceAbi.Methods["enc"].Id())
-	copy(hardCapid[:], solenhanceAbi.Methods["getHardCap"].Id())
-	copy(s256MulPkid[:], solenhanceAbi.Methods["mulPk"].Id())
+	copy(getPosAvgReturnId[:], solenhanceAbi.Methods["getPosAvgReturn"].ID)
+	copy(s256Addid[:], solenhanceAbi.Methods["add"].ID)
+	copy(s256MulGid[:], solenhanceAbi.Methods["mulG"].ID)
+	copy(checkSigid[:], solenhanceAbi.Methods["checkSig"].ID)
+	copy(checkSigid2[:], common.Hex2Bytes("861731d5"))
+	copy(encid[:], solenhanceAbi.Methods["enc"].ID)
+	copy(hardCapid[:], solenhanceAbi.Methods["getHardCap"].ID)
+	copy(s256MulPkid[:], solenhanceAbi.Methods["mulPk"].ID)
 
-	copy(s256CalPolyCommitid[:], solenhanceAbi.Methods["s256CalPolyCommit"].Id())
-	copy(bn256CalPolyCommitid[:], solenhanceAbi.Methods["bn256CalPolyCommit"].Id())
-	copy(bn256MulGid[:], solenhanceAbi.Methods["bn256MulG"].Id())
+	copy(s256CalPolyCommitid[:], solenhanceAbi.Methods["s256CalPolyCommit"].ID)
+	copy(bn256CalPolyCommitid[:], solenhanceAbi.Methods["bn256CalPolyCommit"].ID)
+	copy(bn256MulGid[:], solenhanceAbi.Methods["bn256MulG"].ID)
 }
 
 /////////////////////////////
 type SolEnhance struct {
+	contract *Contract
+	evm      *EVM
 }
 
 //
@@ -473,8 +477,9 @@ func (s *SolEnhance) ValidTx(stateDB StateDB, signer types.Signer, tx *types.Tra
 	return nil
 }
 
-func (s *SolEnhance) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
-
+func (s *SolEnhance) Run(input []byte) ([]byte, error) {
+	contract := s.contract
+	evm  := s.evm
 	epid, _ := posutil.CalEpochSlotID(evm.Time().Uint64())
 	if epid < posconfig.Cfg().MarsEpochId {
 		// return nil,errors.New("not reach forked epochid")
@@ -496,7 +501,7 @@ func (s *SolEnhance) Run(input []byte, contract *Contract, evm *EVM) ([]byte, er
 		return s.s256MulG(input[4:], contract, evm)
 	} else if methodId == s256CalPolyCommitid {
 		return s.s256CalPolyCommit(input[4:], contract, evm)
-	} else if methodId == checkSigid {
+	} else if methodId == checkSigid || methodId == checkSigid2 {
 		return s.checkSig(input[4:], contract, evm)
 	} else if methodId == encid {
 		return s.encrypt(input[4:], contract, evm)
@@ -908,14 +913,19 @@ func hexKey(prv string) *ecies.PrivateKey {
 }
 
 // bn256Add implements a native elliptic curve point addition.
-type s256Add struct{}
+type s256Add struct{
+	contract *Contract
+	evm      *EVM
+}
 
 // RequiredGas returns the gas required to execute the pre-compiled contract.
 func (s *s256Add) RequiredGas(input []byte) uint64 {
 	return params.S256AddGas
 }
 
-func (s *s256Add) Run(payload []byte, contract *Contract, evm *EVM) ([]byte, error) {
+func (s *s256Add) Run(payload []byte) ([]byte, error) {
+	//contract := s.contract
+	evm  := s.evm
 	if evm != nil {
 		epid, _ := posutil.CalEpochSlotID(evm.Time().Uint64())
 		if epid < posconfig.Cfg().MarsEpochId {
@@ -961,14 +971,19 @@ func (s *s256Add) ValidTx(stateDB StateDB, signer types.Signer, tx *types.Transa
 }
 
 // bn256ScalarMul implements a native elliptic curve scalar multiplication.
-type s256ScalarMul struct{}
+type s256ScalarMul struct{
+	contract *Contract
+	evm      *EVM
+}
 
 // RequiredGas returns the gas required to execute the pre-compiled contract.
 func (s *s256ScalarMul) RequiredGas(input []byte) uint64 {
 	return params.S256ScalarMulGas
 }
 
-func (s *s256ScalarMul) Run(payload []byte, contract *Contract, evm *EVM) ([]byte, error) {
+func (s *s256ScalarMul) Run(payload []byte) ([]byte, error) {
+	//contract := s.contract
+	evm  := s.evm
 	if evm != nil {
 		epid, _ := posutil.CalEpochSlotID(evm.Time().Uint64())
 		if epid < posconfig.Cfg().MarsEpochId {

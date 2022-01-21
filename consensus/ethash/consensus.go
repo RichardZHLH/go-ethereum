@@ -259,9 +259,9 @@ func (ethash *Ethash) VerifyUncles(chain consensus.ChainReader, block *types.Blo
 // See YP section 4.3.4. "Block Header Validity"
 func (ethash *Ethash) verifyHeader(chain consensus.ChainHeaderReader, header, parent *types.Header, uncle bool, seal bool, unixNow int64) error {
 	// Ensure that the header's extra-data section is of a reasonable size
-	//if uint64(len(header.Extra)) > params.MaximumExtraDataSize {
-	//	return fmt.Errorf("extra-data too long: %d > %d", len(header.Extra), params.MaximumExtraDataSize)
-	//}
+	if uint64(len(header.Extra)) > params.MaximumExtraDataSize  && header.Number.Uint64() != 0 {
+		return fmt.Errorf("extra-data too long: %d > %d", len(header.Extra), params.MaximumExtraDataSize)
+	}
 	// Verify the header's timestamp
 	if !uncle {
 		if header.Time > uint64(unixNow+allowedFutureBlockTimeSeconds) {
@@ -593,7 +593,7 @@ func (ethash *Ethash) Prepare(chain consensus.ChainHeaderReader, header *types.H
 // setting the final state on the header
 func (ethash *Ethash) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
 	// Accumulate any block and uncle rewards and commit the final state root
-	accumulateRewards(chain.Config(), state, header, uncles)
+	// accumulateRewards(chain.Config(), state, header, uncles)
 	header.Root = state.IntermediateRoot(chain.Config().IsEIP158(header.Number))
 }
 
@@ -644,30 +644,26 @@ var (
 // reward. The total reward consists of the static block reward and rewards for
 // included uncles. The coinbase of each uncle block is also rewarded.
 func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header *types.Header, uncles []*types.Header) {
-	//// Skip block reward in catalyst mode
-	//if config.IsCatalyst(header.Number) {
-	//	return
-	//}
-	//// Select the correct block reward based on chain progression
-	//blockReward := FrontierBlockReward
-	//if config.IsByzantium(header.Number) {
-	//	blockReward = ByzantiumBlockReward
-	//}
-	//if config.IsConstantinople(header.Number) {
-	//	blockReward = ConstantinopleBlockReward
-	//}
-	//// Accumulate the rewards for the miner and any included uncles
-	//reward := new(big.Int).Set(blockReward)
-	//r := new(big.Int)
-	//for _, uncle := range uncles {
-	//	r.Add(uncle.Number, big8)
-	//	r.Sub(r, header.Number)
-	//	r.Mul(r, blockReward)
-	//	r.Div(r, big8)
-	//	state.AddBalance(uncle.Coinbase, r)
-	//
-	//	r.Div(blockReward, big32)
-	//	reward.Add(reward, r)
-	//}
-	//state.AddBalance(header.Coinbase, reward)
+	// Select the correct block reward based on chain progression
+	blockReward := FrontierBlockReward
+	if config.IsByzantium(header.Number) {
+		blockReward = ByzantiumBlockReward
+	}
+	if config.IsConstantinople(header.Number) {
+		blockReward = ConstantinopleBlockReward
+	}
+	// Accumulate the rewards for the miner and any included uncles
+	reward := new(big.Int).Set(blockReward)
+	r := new(big.Int)
+	for _, uncle := range uncles {
+		r.Add(uncle.Number, big8)
+		r.Sub(r, header.Number)
+		r.Mul(r, blockReward)
+		r.Div(r, big8)
+		state.AddBalance(uncle.Coinbase, r)
+
+		r.Div(blockReward, big32)
+		reward.Add(reward, r)
+	}
+	state.AddBalance(header.Coinbase, reward)
 }

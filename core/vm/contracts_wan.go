@@ -17,7 +17,6 @@
 package vm
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
@@ -193,21 +192,6 @@ type PrecompiledContractWan interface {
 	ValidTx(stateDB StateDB, signer types.Signer, tx *types.Transaction) error
 }
 
-func IsWanchainPrecompiled(addr common.Address, contract *Contract, evm *EVM) (PrecompiledContract, bool) {
-	if bytes.Equal(addr.Bytes(), wanCoinPrecompileAddr.Bytes()) || bytes.Equal(addr.Bytes(), wanStampPrecompileAddr.Bytes()) {
-		switch addr {
-		case wanCoinPrecompileAddr:
-			return &wanCoinSC{contract, evm}, true
-		case wanStampPrecompileAddr:
-			return &wanchainStampSC{contract, evm}, true
-		default:
-			return nil, false
-		}
-	}
-	return nil, false
-
-}
-
 func (evm *EVM) precompileWan(addr common.Address, contract *Contract, env *EVM) (PrecompiledContract, bool) {
 	var precompiles map[common.Address]PrecompiledContract
 	switch {
@@ -234,13 +218,13 @@ func (c *wanchainStampSC) RequiredGas(input []byte) uint64 {
 	return params.SstoreSetGas * 2
 }
 
-func (c *wanchainStampSC) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
-	c.contract = contract
-	c.evm = evm
-	return c._Run(input)
-}
+//func (c *wanchainStampSC) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
+//	c.contract = contract
+//	c.evm = evm
+//	return c._Run(input)
+//}
 
-func (c *wanchainStampSC) _Run(in []byte) ([]byte, error) {
+func (c *wanchainStampSC) Run(in []byte) ([]byte, error) {
 	if len(in) < 4 {
 		return nil, errParameters
 	}
@@ -285,7 +269,7 @@ func (c *wanchainStampSC) ValidBuyStampReq(stateDB StateDB, payload []byte, valu
 		Value   *big.Int
 	}
 
-	err = stampAbi.UnpackIntoInterface(&StampInput, "buyStamp", payload)
+	err = stampAbi.UnpackInput(&StampInput, "buyStamp", payload)
 	if err != nil || StampInput.Value == nil {
 		return nil, errBuyStamp
 	}
@@ -360,7 +344,7 @@ func (c *wanCoinSC) RequiredGas(input []byte) uint64 {
 			Value          *big.Int
 		}
 
-		err := coinAbi.UnpackIntoInterface(&RefundStruct, "refundCoin", input[4:])
+		err := coinAbi.UnpackInput(&RefundStruct, "refundCoin", input[4:])
 		if err != nil {
 			return params.RequiredGasPerMixPub
 		}
@@ -383,7 +367,7 @@ func (c *wanCoinSC) RequiredGas(input []byte) uint64 {
 
 }
 
-func (c *wanCoinSC) _Run(in []byte) ([]byte, error) { //, contract *Contract, evm *EVM
+func (c *wanCoinSC) Run(in []byte) ([]byte, error) { //, contract *Contract, evm *EVM
 	if len(in) < 4 {
 		return nil, errParameters
 	}
@@ -400,14 +384,14 @@ func (c *wanCoinSC) _Run(in []byte) ([]byte, error) { //, contract *Contract, ev
 	return nil, errMethodId
 }
 
-func (c *wanCoinSC) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
-	// add by Jacob begin
-	c.contract = contract
-	c.evm = evm
-	// add by Jacob end
-
-	return c._Run(input)
-}
+//func (c *wanCoinSC) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
+//	// add by Jacob begin
+//	c.contract = contract
+//	c.evm = evm
+//	// add by Jacob end
+//
+//	return c._Run(input)
+//}
 
 func (c *wanCoinSC) ValidTx(stateDB StateDB, signer types.Signer, tx *types.Transaction) error {
 	if stateDB == nil || signer == nil || tx == nil {
@@ -453,7 +437,7 @@ func (c *wanCoinSC) ValidBuyCoinReq(stateDB StateDB, payload []byte, txValue *bi
 		Value   *big.Int
 	}
 
-	err = coinAbi.UnpackIntoInterface(&outStruct, "buyCoinNote", payload)
+	err = coinAbi.UnpackInput(&outStruct, "buyCoinNote", payload)
 	if err != nil || outStruct.Value == nil {
 		return nil, errBuyCoin
 	}
@@ -522,7 +506,7 @@ func (c *wanCoinSC) ValidRefundReq(stateDB StateDB, payload []byte, from []byte)
 		Value          *big.Int
 	}
 
-	err = coinAbi.UnpackIntoInterface(&RefundStruct, "refundCoin", payload)
+	err = coinAbi.UnpackInput(&RefundStruct, "refundCoin", payload)
 	if err != nil || RefundStruct.Value == nil {
 		return nil, nil, errRefundCoin
 	}

@@ -149,7 +149,10 @@ var (
 
 // SignerFn is a signer callback function to request a hash to be signed by a
 // backing account.
-type SignerFn func(accounts.Account, []byte) ([]byte, error)
+// type SignerFn func(accounts.Account, []byte) ([]byte, error)
+
+// SignerFn hashes and signs the data to be signed by a backing account.
+type SignerFn func(signer accounts.Account, mimeType string, message []byte) ([]byte, error)
 
 // sigHash returns the hash which is used as input for the proof-of-authority
 // signing. It is the hash of the entire header apart from the 65 byte signature
@@ -180,6 +183,26 @@ func sigHash(header *types.Header) (hash common.Hash) {
 	})
 	hasher.Sum(hash[:0])
 	return hash
+}
+func sigData(header *types.Header) ([]byte, error) {
+	return rlp.EncodeToBytes([]interface{}{
+		header.ParentHash,
+		header.UncleHash,
+		header.Coinbase,
+		header.Root,
+		header.TxHash,
+		header.ReceiptHash,
+		header.Bloom,
+		header.Difficulty,
+		header.Number,
+		header.GasLimit,
+		header.GasUsed,
+		header.Time,
+		header.Extra[:len(header.Extra)-extraSeal], // Yes, this will panic if extra is too short
+		header.MixDigest,
+		header.Nonce,
+	})
+
 }
 
 // ecrecover extracts the Ethereum account address from a signed header.
@@ -937,7 +960,11 @@ func (c *Pluto) Seal(chain consensus.ChainHeaderReader, block *types.Block, resu
 	copy(header.Extra[:len(buf)], buf)
 	header.Difficulty.SetUint64(epochSlotId)
 
-	sighash, err := signFn(accounts.Account{Address: signer}, sigHash(header).Bytes())
+	data,err := sigData(header)
+	if err != nil {
+		return err
+	}
+	sighash, err := signFn(accounts.Account{Address: signer}, accounts.MimetypeTypedData, data)
 	if err != nil {
 		return err
 	}
@@ -1046,7 +1073,7 @@ func (ethash *Pluto) SealHash(header *types.Header) (hash common.Hash) {
 			header.Nonce,
 		})
 	*/
-
+// TODO the hash field is not enough.
 	rlp.Encode(hasher, []interface{}{
 		header.ParentHash,
 		//header.UncleHash,
@@ -1087,6 +1114,7 @@ func encodeSigHeader(w io.Writer, header *types.Header) {
 		header.MixDigest,
 		header.Nonce,
 	}
+
 
 	if header.BaseFee != nil {
 		enc = append(enc, header.BaseFee)

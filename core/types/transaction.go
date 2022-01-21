@@ -687,7 +687,7 @@ func (m Message) AccessList() AccessList { return m.accessList }
 func (m Message) IsFake() bool           { return m.isFake }
 func (m Message) CheckNonce() bool       { return m.checkNonce }
 
-func (m Message) TxType() uint64 { return m.txType }
+func (m Message) TxType() uint64         { return m.txType }
 
 // copyAddressPtr copies an address.
 func copyAddressPtr(a *common.Address) *common.Address {

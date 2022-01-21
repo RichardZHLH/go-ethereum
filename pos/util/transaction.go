@@ -50,5 +50,7 @@ func SendPosTx(rc *rpc.Client, tx map[string]interface{}) {
 		log.Debug("SendPosTx", "delay", delay)
 	}
 
-	//SendTx(rc, tx)
+
+
+	SendTx(rc, tx)
 }

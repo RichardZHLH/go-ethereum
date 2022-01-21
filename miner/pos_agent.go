@@ -133,7 +133,7 @@ func (self *Miner) backendTimerLoop(s Backend) {
 	log.Debug("localPublicKey :" + localPublicKey)
 
 	if pluto, ok := self.engine.(*pluto.Pluto); ok {
-		pluto.Authorize(eb, wallet.SignHash, key)
+		pluto.Authorize(eb, wallet.SignData, key)
 	}
 	posInitMiner(s, key)
 	// get rpcClient

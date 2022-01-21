@@ -289,7 +289,8 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	// 6. caller has enough balance to cover asset transfer for **topmost** call
 
 	// Check clauses 1-3, buy gas if everything is correct
-	if !types.IsPrivacyTransaction(st.msg.TxType()) {
+	tyType := st.msg.TxType()
+	if !types.IsPrivacyTransaction(tyType) {
 		if err := st.preCheck(); err != nil {
 			return nil, err
 		}
@@ -312,7 +313,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	}
 	// wanchain priv tx
 	var stampTotalGas uint64
-	if types.IsPrivacyTransaction(st.msg.TxType()) {
+	if types.IsPrivacyTransaction(tyType) {
 		pureCallData, totalUseableGas, evmUseableGas, err := PreProcessPrivacyTx(st.evm.StateDB,
 			sender.Address().Bytes(),
 			st.data, st.gasPrice, st.value)
@@ -362,12 +363,12 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 		// Before EIP-3529: refunds were capped to gasUsed / 2
 		// st.refundGas(params.RefundQuotient)
 		var requiredGas uint64
-		if types.IsNormalTransaction(st.msg.TxType()) || types.IsPosTransaction(st.msg.TxType()) {
+		if types.IsNormalTransaction(tyType) || types.IsPosTransaction(tyType) {
 			requiredGas = st.gasUsed()
 			st.refundGas()
 			usedGas = st.gasUsed()
 			//log.Trace("calc used gas, normal tx", "required gas", requiredGas, "used gas", usedGas)
-		} else if types.IsPrivacyTransaction(st.msg.TxType()) {
+		} else if types.IsPrivacyTransaction(tyType) {
 			requiredGas = stampTotalGas
 			usedGas = requiredGas
 			//log.Trace("calc used gas, pos tx", "required gas", requiredGas, "used gas", usedGas)

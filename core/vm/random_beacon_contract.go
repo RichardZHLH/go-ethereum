@@ -197,6 +197,8 @@ func GetRBStage(slotId uint64) (int, int, int) {
 // which will be used to generate next epoch leaders and slot leaders.
 // Random beacon protocol has 3 stages --- dkg1 (in 1k,2k slots), dkg2 (in 4k,5k slots), sigShare (in 8k, 9k slots)
 type RandomBeaconContract struct {
+	contract *Contract
+	evm      *EVM
 }
 
 //
@@ -207,12 +209,12 @@ func init() {
 		panic("err in rb smart contract abi initialize")
 	}
 
-	copy(dkg1Id[:], rbSCAbi.Methods["dkg1"].Id())
-	copy(dkg2Id[:], rbSCAbi.Methods["dkg2"].Id())
-	copy(sigShareId[:], rbSCAbi.Methods["sigShare"].Id())
-	copy(getEpochIdId[:], rbSCAbi.Methods["getEpochId"].Id())
-	copy(getRandomNumberByEpochIdId[:], rbSCAbi.Methods["getRandomNumberByEpochId"].Id())
-	copy(getRandomNumberByTimestampId[:], rbSCAbi.Methods["getRandomNumberByTimestamp"].Id())
+	copy(dkg1Id[:], rbSCAbi.Methods["dkg1"].ID)
+	copy(dkg2Id[:], rbSCAbi.Methods["dkg2"].ID)
+	copy(sigShareId[:], rbSCAbi.Methods["sigShare"].ID)
+	copy(getEpochIdId[:], rbSCAbi.Methods["getEpochId"].ID)
+	copy(getRandomNumberByEpochIdId[:], rbSCAbi.Methods["getRandomNumberByEpochId"].ID)
+	copy(getRandomNumberByTimestampId[:], rbSCAbi.Methods["getRandomNumberByTimestamp"].ID)
 }
 
 //
@@ -222,7 +224,9 @@ func (c *RandomBeaconContract) RequiredGas(input []byte) uint64 {
 	return 0
 }
 
-func (c *RandomBeaconContract) Run(input []byte, contract *Contract, evm *EVM) ([]byte, error) {
+func (c *RandomBeaconContract) Run(input []byte) ([]byte, error) {
+	contract := c.contract
+	evm  := c.evm
 	// check data
 	if len(input) < 4 {
 		return nil, errParameters

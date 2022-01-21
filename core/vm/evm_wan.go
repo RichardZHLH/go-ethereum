@@ -16,9 +16,45 @@
 
 package vm
 
-import "math/big"
+import (
+	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+)
 // add by jacob
 func (evm *EVM) Time() *big.Int {
 	return evm.Context.Time
+}
+
+func IsWanchainPrecompiled(addr common.Address, contract *Contract, evm *EVM) (PrecompiledContract, bool) { // TODO delete it????
+	switch addr {
+	case wanCoinPrecompileAddr:
+		return &wanCoinSC{contract, evm}, true
+	case wanStampPrecompileAddr:
+		return &wanchainStampSC{contract, evm}, true
+	case WanCscPrecompileAddr:
+		return &PosStaking{contract, evm},true
+	case PosControlPrecompileAddr:
+		return &PosControl{contract, evm},true
+	case slotLeaderPrecompileAddr:
+		return &slotLeaderSC{contract, evm},true
+	case randomBeaconPrecompileAddr:
+		return &RandomBeaconContract{contract, evm},true
+	case SolEnhancePrecompileAddr:
+		return &SolEnhance{contract, evm},true
+	case s256AddPrecompileAddr:
+		return &s256Add{contract, evm},true
+	case s256ScalarMulPrecompileAddr:
+		return &s256ScalarMul{contract, evm},true
+	default:
+		return nil, false
+	}
+}
+func (evm *EVM) precompile(addr common.Address, caller ContractRef, value *big.Int, gas uint64) (PrecompiledContract, bool) {
+	p, ok := evm.precompileEth(addr)
+	if !ok {
+		contract := NewContract(caller, AccountRef(addr), value, gas)
+		return IsWanchainPrecompiled(addr, contract, evm);
+	}
+	return p, ok
 }

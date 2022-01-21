@@ -18,6 +18,15 @@ package abi
 
 // add by jacob
 // Unpack input in v according to the abi specification
-func (abi ABI) UnpackInput(v interface{}, name string, output []byte) (err error) {
-	return abi.UnpackIntoInterfaceWan(v, name, output)
+// ethereum native unpack* used to unpack output/log。
+func (abi ABI) UnpackInput(v interface{}, name string, input []byte) (err error) {
+	var args Arguments
+	if method, ok := abi.Methods[name]; ok {
+		args = method.Inputs
+	}
+	unpacked, err := args.Unpack(input)
+	if err != nil {
+		return err
+	}
+	return args.Copy(v, unpacked)
 }
