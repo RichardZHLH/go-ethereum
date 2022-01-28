@@ -171,7 +171,7 @@ type Signer interface {
 	Equal(Signer) bool
 }
 
-type londonSigner struct{ eip2930Signer }
+type londonSigner struct{ EIP155Signer }
 
 // NewLondonSigner returns a signer that accepts
 // - EIP-1559 dynamic fee transactions
@@ -179,12 +179,12 @@ type londonSigner struct{ eip2930Signer }
 // - EIP-155 replay protected transactions, and
 // - legacy Homestead transactions.
 func NewLondonSigner(chainId *big.Int) Signer {
-	return londonSigner{eip2930Signer{NewEIP155Signer(chainId)}}
+	return londonSigner{NewEIP155Signer(chainId)}
 }
 
 func (s londonSigner) Sender(tx *Transaction) (common.Address, error) {
 	if tx.Type() != DynamicFeeTxType {
-		return s.eip2930Signer.Sender(tx)
+		return s.EIP155Signer.Sender(tx)
 	}
 	V, R, S := tx.RawSignatureValues()
 	// DynamicFee txs are defined to use 0 and 1 as their recovery
@@ -206,7 +206,7 @@ func (s londonSigner) Equal(s2 Signer) bool {
 func (s londonSigner) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big.Int, err error) {
 	txdata, ok := tx.inner.(*DynamicFeeTx)
 	if !ok {
-		return s.eip2930Signer.SignatureValues(tx, sig)
+		return s.EIP155Signer.SignatureValues(tx, sig)
 	}
 	// Check that chain ID of tx matches the signer. We also accept ID zero here,
 	// because it indicates that the chain ID was not specified in the tx.
@@ -222,7 +222,7 @@ func (s londonSigner) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big
 // It does not uniquely identify the transaction.
 func (s londonSigner) Hash(tx *Transaction) common.Hash {
 	if tx.Type() != DynamicFeeTxType {
-		return s.eip2930Signer.Hash(tx)
+		return s.EIP155Signer.Hash(tx)
 	}
 	return prefixedRlpHash(
 		tx.Type(),
@@ -407,7 +407,7 @@ func (s EIP155Signer) Hash(tx *Transaction) common.Hash {
 		chainId = big.NewInt(0).SetUint64(params.JupiterChainId(s.chainId.Uint64()))
 	}
 
-	if IsEthereumTx(tx.ChainId().Uint64()) {
+	if IsEthereumTx(tx.ChainId().Uint64()) && tx.Type()!= 1 && tx.Type()!= 7 { // TODO how to
 		return rlpHash([]interface{}{
 			tx.Nonce(),
 			tx.GasPrice(),
