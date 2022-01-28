@@ -757,7 +757,7 @@ func (a PosApi) CalProbability(amountCoin uint64, lockTime uint64) (string, erro
 	}
 
 	amountWin := big.NewInt(0).SetUint64(amountCoin)
-	amountWin.Mul(amountWin, big.NewInt(params.Wan))
+	amountWin.Mul(amountWin, big.NewInt(params.Ether))
 
 	probablity := epocherInst.CalProbability(amountWin, lockTime)
 	return biToString(probablity, nil)

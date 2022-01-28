@@ -119,7 +119,7 @@ func (result *ExecutionResult) Revert() []byte {
 }
 
 // IntrinsicGas computes the 'intrinsic gas' for a message with the given data.
-func IntrinsicGas(data []byte, accessList types.AccessList, isContractCreation bool, isHomestead, isEIP2028 bool, to *common.Address) (uint64, error) {
+func IntrinsicGas(data []byte, accessList types.AccessList, isContractCreation bool, isHomestead, isEIP2028 bool) (uint64, error) {
 	// Set the starting gas for the raw transaction
 	var gas uint64
 	if isContractCreation && isHomestead {
@@ -156,13 +156,15 @@ func IntrinsicGas(data []byte, accessList types.AccessList, isContractCreation b
 		gas += uint64(len(accessList)) * params.TxAccessListAddressGas
 		gas += uint64(accessList.StorageKeys()) * params.TxAccessListStorageKeyGas
 	}
-	// reduce gas used for pos tx
+	return gas, nil
+}
+func IntrinsicGasWan(data []byte, accessList types.AccessList, isContractCreation bool, isHomestead, isEIP2028 bool, to *common.Address) (uint64, error) {
+	gas, err := IntrinsicGas(data, accessList, isContractCreation, isHomestead, isEIP2028)
 	if vm.IsPosPrecompiledAddr(to) {
 		gas = gas/10
 	}
-	return gas, nil
+	return gas, err
 }
-
 // NewStateTransition initialises and returns a new state transition object.
 func NewStateTransition(evm *vm.EVM, msg Message, gp *GasPool) *StateTransition {
 	return &StateTransition{
@@ -307,7 +309,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 		return nil, fmt.Errorf("%w: address %v", ErrInsufficientFundsForTransfer, msg.From().Hex())
 	}
 	// Check clauses 4-5, subtract intrinsic gas if everything is correct
-	gas, err := IntrinsicGas(st.data, st.msg.AccessList(), contractCreation, homestead, istanbul, msg.To())
+	gas, err := IntrinsicGasWan(st.data, st.msg.AccessList(), contractCreation, homestead, istanbul, msg.To())
 	if err != nil {
 		return nil, err
 	}

@@ -46,7 +46,7 @@ const (
 
 var (
 	//defaultGasPrice = big.NewInt(0).Mul(big.NewInt(18*params.Shannon), params.WanGasTimesFactor)
-	defaultGasPrice = big.NewInt(1 * params.Shannon)
+	//defaultGasPrice = big.NewInt(1 * params.Shannon)
 )
 
 var (
@@ -549,7 +549,7 @@ func (s *PublicTransactionPoolAPI) ComputeOTAPPKeys(ctx context.Context, address
 	BX := "0x" + otaAddr[128:192]
 	BY := "0x" + otaAddr[192:256]
 
-	sS, err := wallet.ComputeOTAPPKeys(account, AX, AY, BX, BY)
+	sS, err := wallet.(accounts.WanWallet).ComputeOTAPPKeys(account, AX, AY, BX, BY)
 	if err != nil {
 		return "", err
 	}
@@ -580,7 +580,7 @@ func (s *PublicTransactionPoolAPI) GetWanAddress(ctx context.Context, a common.A
 	if err != nil {
 		return "", err
 	}
-	wanAddr, err := wallet.GetWanAddress(account)
+	wanAddr, err := wallet.(accounts.WanWallet).GetWanAddress(account)
 	if err != nil {
 		return "", err
 	}

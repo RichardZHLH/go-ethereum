@@ -47,7 +47,7 @@ func (txn *txNoncer) get(addr common.Address) uint64 {
 	// state will mutate db even for read access.
 	txn.lock.Lock()
 	defer txn.lock.Unlock()
-	//todo jacob, get nonce from fallback to avoid nonce too low ??
+
 	if _, ok := txn.nonces[addr]; !ok {
 		txn.nonces[addr] = txn.fallback.GetNonce(addr)
 	}
