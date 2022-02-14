@@ -17,8 +17,8 @@
 package keystore
 
 import (
-	//"bytes"
-	//"crypto/ecdsa"
+	"bytes"
+	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -26,7 +26,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	//"strings"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts"
@@ -39,29 +39,22 @@ const (
 	version = 3
 )
 
-//type Key struct {
-//	Id uuid.UUID // Version 4 "random" for unique id not derived from key data
-//	// to simplify lookups we also store the address
-//	Address common.Address
-//	// we only store privkey as pubkey/address can be derived from it
-//	// privkey in this struct is always in plaintext
-//	PrivateKey *ecdsa.PrivateKey
-//}
+type KeyEth struct {
+	Id uuid.UUID // Version 4 "random" for unique id not derived from key data
+	// to simplify lookups we also store the address
+	Address common.Address
+	// we only store privkey as pubkey/address can be derived from it
+	// privkey in this struct is always in plaintext
+	PrivateKey *ecdsa.PrivateKey
+}
 
-type keyStore interface {
+type keyStoreEth interface {
 	// Loads and decrypts the key from disk.
 	GetKey(addr common.Address, filename string, auth string) (*Key, error)
 	// Writes and encrypts the key.
 	StoreKey(filename string, k *Key, auth string) error
 	// Joins filename with the key directory unless it is already absolute.
 	JoinPath(filename string) string
-
-	// add by Jacob begin
-	// Decrypts the key from keyjson
-	GetKeyFromKeyJson(addr common.Address, keyjson []byte, auth string) (*Key, error)
-	// Loads an encrypted keyfile from disk
-	GetEncryptedKey(addr common.Address, filename string) (*Key, error)
-	// add by Jacob end
 }
 
 type plainKeyJSON struct {
@@ -71,14 +64,11 @@ type plainKeyJSON struct {
 	Version    int    `json:"version"`
 }
 
-type encryptedKeyJSONV3 struct {
+type encryptedKeyJSONV3Eth struct {
 	Address  string     `json:"address"`
 	Crypto   CryptoJSON `json:"crypto"`
-	Crypto2  CryptoJSON `json:"crypto2"` // add by Jacob
 	Id       string     `json:"id"`
 	Version  int        `json:"version"`
-	WAddress string     `json:"waddress"` // add by Jacob
-
 }
 
 type encryptedKeyJSONV1 struct {
@@ -140,47 +130,47 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 	return nil
 }
 
-//func newKeyFromECDSA(privateKeyECDSA *ecdsa.PrivateKey) *Key {
-//	id, err := uuid.NewRandom()
-//	if err != nil {
-//		panic(fmt.Sprintf("Could not create random uuid: %v", err))
-//	}
-//	key := &Key{
-//		Id:         id,
-//		Address:    crypto.PubkeyToAddress(privateKeyECDSA.PublicKey),
-//		PrivateKey: privateKeyECDSA,
-//	}
-//	return key
-//}
+func newKeyFromECDSAEth(privateKeyECDSA *ecdsa.PrivateKey) *Key {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		panic(fmt.Sprintf("Could not create random uuid: %v", err))
+	}
+	key := &Key{
+		Id:         id,
+		Address:    crypto.PubkeyToAddress(privateKeyECDSA.PublicKey),
+		PrivateKey: privateKeyECDSA,
+	}
+	return key
+}
 
-//// NewKeyForDirectICAP generates a key whose address fits into < 155 bits so it can fit
-//// into the Direct ICAP spec. for simplicity and easier compatibility with other libs, we
-//// retry until the first byte is 0.
-//func NewKeyForDirectICAP(rand io.Reader) *Key {
-//	randBytes := make([]byte, 64)
-//	_, err := rand.Read(randBytes)
-//	if err != nil {
-//		panic("key generation: could not read from random source: " + err.Error())
-//	}
-//	reader := bytes.NewReader(randBytes)
-//	privateKeyECDSA, err := ecdsa.GenerateKey(crypto.S256(), reader)
-//	if err != nil {
-//		panic("key generation: ecdsa.GenerateKey failed: " + err.Error())
-//	}
-//	key := newKeyFromECDSA(privateKeyECDSA)
-//	if !strings.HasPrefix(key.Address.Hex(), "0x00") {
-//		return NewKeyForDirectICAP(rand)
-//	}
-//	return key
-//}
-//
-//func newKey(rand io.Reader) (*Key, error) {
-//	privateKeyECDSA, err := ecdsa.GenerateKey(crypto.S256(), rand)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return newKeyFromECDSA(privateKeyECDSA), nil
-//}
+// NewKeyForDirectICAP generates a key whose address fits into < 155 bits so it can fit
+// into the Direct ICAP spec. for simplicity and easier compatibility with other libs, we
+// retry until the first byte is 0.
+func NewKeyForDirectICAPEth(rand io.Reader) *Key {
+	randBytes := make([]byte, 64)
+	_, err := rand.Read(randBytes)
+	if err != nil {
+		panic("key generation: could not read from random source: " + err.Error())
+	}
+	reader := bytes.NewReader(randBytes)
+	privateKeyECDSA, err := ecdsa.GenerateKey(crypto.S256(), reader)
+	if err != nil {
+		panic("key generation: ecdsa.GenerateKey failed: " + err.Error())
+	}
+	key := newKeyFromECDSAEth(privateKeyECDSA)
+	if !strings.HasPrefix(key.Address.Hex(), "0x00") {
+		return NewKeyForDirectICAP(rand)
+	}
+	return key
+}
+
+func newKeyEth(rand io.Reader) (*Key, error) {
+	privateKeyECDSA, err := ecdsa.GenerateKey(crypto.S256(), rand)
+	if err != nil {
+		return nil, err
+	}
+	return newKeyFromECDSAEth(privateKeyECDSA), nil
+}
 
 func storeNewKey(ks keyStore, rand io.Reader, auth string) (*Key, accounts.Account, error) {
 	key, err := newKey(rand)

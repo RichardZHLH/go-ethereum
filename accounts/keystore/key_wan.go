@@ -52,6 +52,32 @@ type Key struct {
 	WAddress common.WAddress
 }
 
+type keyStore interface {
+	// Loads and decrypts the key from disk.
+	GetKey(addr common.Address, filename string, auth string) (*Key, error)
+	// Writes and encrypts the key.
+	StoreKey(filename string, k *Key, auth string) error
+	// Joins filename with the key directory unless it is already absolute.
+	JoinPath(filename string) string
+
+	// add by Jacob begin
+	// Decrypts the key from keyjson
+	GetKeyFromKeyJson(addr common.Address, keyjson []byte, auth string) (*Key, error)
+	// Loads an encrypted keyfile from disk
+	GetEncryptedKey(addr common.Address, filename string) (*Key, error)
+	// add by Jacob end
+}
+
+type encryptedKeyJSONV3 struct {
+	Address  string     `json:"address"`
+	Crypto   CryptoJSON `json:"crypto"`
+	Crypto2  CryptoJSON `json:"crypto2"` // add by Jacob
+	Id       string     `json:"id"`
+	Version  int        `json:"version"`
+	WAddress string     `json:"waddress"` // add by Jacob
+
+}
+
 // Used to import and export raw keypair
 type keyPair struct {
 	D  string `json:"privateKey"`
