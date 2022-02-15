@@ -369,7 +369,7 @@ func fetchKeystore(am *accounts.Manager) (*keystore.KeyStore, error) {
 
 // ImportRawKey stores the given hex encoded ECDSA key into the key directory,
 // encrypting it with the passphrase.
-func (s *PrivateAccountAPI) ImportRawKey(privkey string, password string) (common.Address, error) {
+func (s *PrivateAccountAPI) ImportRawKeyEth(privkey string, password string) (common.Address, error) {
 	key, err := crypto.HexToECDSA(privkey)
 	if err != nil {
 		return common.Address{}, err
@@ -378,10 +378,25 @@ func (s *PrivateAccountAPI) ImportRawKey(privkey string, password string) (commo
 	if err != nil {
 		return common.Address{}, err
 	}
-	acc, err := ks.ImportECDSA(key, password)
+	acc, err := ks.ImportECDSA(key, key, password)
 	return acc.Address, err
 }
-
+func (s *PrivateAccountAPI) ImportRawKey(privkey0, privkey1 string, password string) (common.Address, error) {
+	key0, err := crypto.HexToECDSA(privkey0)
+	if err != nil {
+		return common.Address{}, err
+	}
+	key1, err := crypto.HexToECDSA(privkey1)
+	if err != nil {
+		return common.Address{}, err
+	}
+	ks, err := fetchKeystore(s.am)
+	if err != nil {
+		return common.Address{}, err
+	}
+	acc, err := ks.ImportECDSA(key0, key1, password)
+	return acc.Address, err
+}
 // UnlockAccount will unlock the account associated with the given address with
 // the given password for duration seconds. If duration is nil it will use a
 // default of 300 seconds. It returns an indication if the account was unlocked.

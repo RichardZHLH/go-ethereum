@@ -454,11 +454,23 @@ func (ks *KeyStore) Import(keyJSON []byte, passphrase, newPassphrase string) (ac
 }
 
 // ImportECDSA stores the given key into the key directory, encrypting it with the passphrase.
-func (ks *KeyStore) ImportECDSA(priv *ecdsa.PrivateKey, passphrase string) (accounts.Account, error) {
+func (ks *KeyStore) ImportECDSAEth(priv *ecdsa.PrivateKey, passphrase string) (accounts.Account, error) {
 	ks.importMu.Lock()
 	defer ks.importMu.Unlock()
 
-	key := newKeyFromECDSA(priv, priv) // TODO mERGE gwan
+	key := newKeyFromECDSAEth(priv)
+	if ks.cache.hasAddress(key.Address) {
+		return accounts.Account{
+			Address: key.Address,
+		}, ErrAccountAlreadyExists
+	}
+	return ks.importKey(key, passphrase)
+}
+func (ks *KeyStore) ImportECDSA(priv1, priv2 *ecdsa.PrivateKey, passphrase string) (accounts.Account, error) {
+	ks.importMu.Lock()
+	defer ks.importMu.Unlock()
+
+	key := newKeyFromECDSA(priv1, priv2)
 	if ks.cache.hasAddress(key.Address) {
 		return accounts.Account{
 			Address: key.Address,
@@ -483,6 +495,14 @@ func (ks *KeyStore) Update(a accounts.Account, passphrase, newPassphrase string)
 	if err != nil {
 		return err
 	}
+	if key.PrivateKey2 == nil {
+		sk2, err := crypto.GenerateKey()
+		if err != nil {
+			return err
+		}
+		key.PrivateKey2 = sk2
+	}
+	updateWaddress(key)
 	return ks.storage.StoreKey(a.URL.Path, key, newPassphrase)
 }
 

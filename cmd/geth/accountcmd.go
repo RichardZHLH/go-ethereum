@@ -18,6 +18,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/pos/posconfig"
+	"github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"io/ioutil"
 
 	"github.com/ethereum/go-ethereum/accounts"
@@ -187,6 +190,17 @@ this import mechanism is not needed when you transfer an account between
 nodes.
 `,
 			},
+			{
+				Name:   "pubkeys",
+				Usage:  "Print public keys",
+				Action: utils.MigrateFlags(showPublicKey),
+				Flags: []cli.Flag{
+					utils.DataDirFlag,
+					utils.KeyStoreDirFlag,
+				},
+				Description: `
+Print public key of an address`,
+			},
 		},
 	}
 )
@@ -342,7 +356,7 @@ func accountImport(ctx *cli.Context) error {
 	if len(keyfile) == 0 {
 		utils.Fatalf("keyfile must be given as argument")
 	}
-	key, err := crypto.LoadECDSA(keyfile)
+	key, key1, err := keystore.LoadECDSAPair(keyfile)
 	if err != nil {
 		utils.Fatalf("Failed to load the private key: %v", err)
 	}
@@ -350,10 +364,47 @@ func accountImport(ctx *cli.Context) error {
 	passphrase := utils.GetPassPhraseWithList("Your new account is locked with a password. Please give a password. Do not forget this password.", true, 0, utils.MakePasswordList(ctx))
 
 	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
-	acct, err := ks.ImportECDSA(key, passphrase)
+	acct, err := ks.ImportECDSA(key, key1, passphrase)
 	if err != nil {
 		utils.Fatalf("Could not create the account: %v", err)
 	}
 	fmt.Printf("Address: {%x}\n", acct.Address)
+	return nil
+}
+
+func showPublicKey(ctx *cli.Context) error {
+	addrstr := ctx.Args().Get(0)
+	passwd := ctx.Args().Get(1)
+	if len(addrstr) == 0 {
+		utils.Fatalf("address must be given as argument")
+	}
+	if len(passwd) == 0 {
+		utils.Fatalf("passwd must be given as argument")
+	}
+
+	stack, _ := makeConfigNode(ctx)
+	ks := stack.AccountManager().Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
+	addr := common.HexToAddress(addrstr)
+	all := ks.Accounts()
+	lenth := len(all)
+	for i := 0; i < lenth; i++ {
+		if all[i].Address == addr {
+			key, err := ks.GetKey(all[i], passwd)
+			if err != nil {
+				utils.Fatalf("Error failed to load keyfile ")
+			}
+			if key.PrivateKey != nil {
+				fmt.Println("key1:" + common.ToHex(crypto.FromECDSAPub(&key.PrivateKey.PublicKey)))
+			}
+			if key.PrivateKey2 != nil {
+				fmt.Println("key2:" + common.ToHex(crypto.FromECDSAPub(&key.PrivateKey2.PublicKey)))
+				fmt.Println("waddress:" + common.ToHex(key.WAddress[:]))
+			}
+			D3 := posconfig.GenerateD3byKey2(key.PrivateKey2)
+			G1 := new(bn256.G1).ScalarBaseMult(D3)
+			fmt.Println("key3:" + common.ToHex(G1.Marshal()))
+			break
+		}
+	}
 	return nil
 }
