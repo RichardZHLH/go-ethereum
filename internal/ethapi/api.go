@@ -397,6 +397,7 @@ func (s *PrivateAccountAPI) ImportRawKey(privkey0, privkey1 string, password str
 	acc, err := ks.ImportECDSA(key0, key1, password)
 	return acc.Address, err
 }
+
 // UnlockAccount will unlock the account associated with the given address with
 // the given password for duration seconds. If duration is nil it will use a
 // default of 300 seconds. It returns an indication if the account was unlocked.
@@ -622,18 +623,14 @@ func NewPublicBlockChainAPI(b Backend) *PublicBlockChainAPI {
 	return &PublicBlockChainAPI{b}
 }
 
-// cancel by Jacob begin
-/*
 // ChainId is the EIP-155 replay-protection chain id for the current ethereum chain config.
-func (api *PublicBlockChainAPI) ChainId() (*hexutil.Big, error) {
+func (api *PublicBlockChainAPI) ChainIdEth() (*hexutil.Big, error) {
 	// if current block is at or past the EIP-155 replay-protection fork block, return chainID from config
 	if config := api.b.ChainConfig(); config.IsEIP155(api.b.CurrentBlock().Number()) {
 		return (*hexutil.Big)(config.ChainID), nil
 	}
 	return nil, fmt.Errorf("chain not synced beyond EIP-155 replay-protection fork block")
 }
-// cancel by Jacob end
-*/
 
 // BlockNumber returns the block number of the chain head.
 func (s *PublicBlockChainAPI) BlockNumber() hexutil.Uint64 {
@@ -1785,7 +1782,7 @@ func (s *PublicTransactionPoolAPI) SendRawTransaction(ctx context.Context, input
 	}
 
 	tx1 := tx
-	fmt.Println("infoxxxxxxxxxxxxxxx:", tx.IsLegacyType() , posutil.IsJupiterForkArrived() , types.IsEthereumTx(tx.ChainId().Uint64()))
+	fmt.Println("infoxxxxxxxxxxxxxxx:", tx.IsLegacyType(), posutil.IsJupiterForkArrived(), types.IsEthereumTx(tx.ChainId().Uint64()))
 	if types.IsEthereumTx(tx.ChainId().Uint64()) && tx.IsLegacyType() && posutil.IsJupiterForkArrived() {
 		data := &types.WanLegacyTx{
 			Txtype:   uint64(types.JUPITER_TX),

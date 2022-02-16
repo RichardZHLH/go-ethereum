@@ -45,8 +45,8 @@ const (
 )
 
 var (
-	//defaultGasPrice = big.NewInt(0).Mul(big.NewInt(18*params.Shannon), params.WanGasTimesFactor)
-	//defaultGasPrice = big.NewInt(1 * params.Shannon)
+//defaultGasPrice = big.NewInt(0).Mul(big.NewInt(18*params.Shannon), params.WanGasTimesFactor)
+//defaultGasPrice = big.NewInt(1 * params.Shannon)
 )
 
 var (
@@ -71,9 +71,9 @@ type RingSignedData struct {
 }
 
 // ProtocolVersion returns the current Ethereum protocol version this node supports
-func (s *PublicEthereumAPI) ProtocolVersion() hexutil.Uint {
-	return hexutil.Uint(s.b.ProtocolVersion())
-}
+//func (s *PublicEthereumAPI) ProtocolVersion() hexutil.Uint {
+//	return hexutil.Uint(s.b.ProtocolVersion())
+//}
 
 func (s *PrivateAccountAPI) UpdateAccount(addr common.Address, oldPassword string, newPassword string) error {
 	keystore, err := fetchKeystore(s.am)
@@ -90,7 +90,7 @@ func (s *PrivateAccountAPI) UpdateAccount(addr common.Address, oldPassword strin
 
 // SendPrivacyCxtTransaction will create a transaction from the given arguments and
 // tries to sign it with the OTA key associated with args.To.
-func (s *PrivateAccountAPI) SendPrivacyCxtTransaction(ctx context.Context, args SendTxArgs, sPrivateKey string) (common.Hash, error) {
+func (s *PrivateAccountAPI) SendPrivacyCxtTransaction(ctx context.Context, args TransactionArgs, sPrivateKey string) (common.Hash, error) {
 
 	if !hexutil.Has0xPrefix(sPrivateKey) {
 		return common.Hash{}, ErrInvalidPrivateKey
@@ -101,7 +101,7 @@ func (s *PrivateAccountAPI) SendPrivacyCxtTransaction(ctx context.Context, args 
 		return common.Hash{}, err
 	}
 
-	if args.To == nil || len(args.Data) == 0 {
+	if args.To == nil || len(args.data()) == 0 {
 		return common.Hash{}, ErrInvalidInput
 	}
 
@@ -347,58 +347,64 @@ func (s *PublicBlockChainAPI) rpcOutputBlock(b *types.Block, inclTx bool, fullTx
 	return fields, nil
 }
 
-// SendTxArgs represents the arguments to sumbit a new transaction into the transaction pool.
-type SendTxArgs struct {
-	From     common.Address  `json:"from"`
-	To       *common.Address `json:"to"`
-	Gas      *hexutil.Big    `json:"gas"`
-	GasPrice *hexutil.Big    `json:"gasPrice"`
-	Value    *hexutil.Big    `json:"value"`
-	Data     hexutil.Bytes   `json:"data"`
-	Nonce    *hexutil.Uint64 `json:"nonce"`
-}
+//
+//// SendTxArgs represents the arguments to sumbit a new transaction into the transaction pool.
+//type SendTxArgs struct {
+//	From     common.Address  `json:"from"`
+//	To       *common.Address `json:"to"`
+//	Gas      *hexutil.Big    `json:"gas"`
+//	GasPrice *hexutil.Big    `json:"gasPrice"`
+//	Value    *hexutil.Big    `json:"value"`
+//	Data     hexutil.Bytes   `json:"data"`
+//	Nonce    *hexutil.Uint64 `json:"nonce"`
+//}
+//
+//// prepareSendTxArgs is a helper function that fills in default values for unspecified tx fields.
+//func (args *SendTxArgs) setDefaults(ctx context.Context, b Backend) error {
+//	if args.Gas == nil {
+//		args.Gas = (*hexutil.Big)(big.NewInt(defaultGas))
+//	}
+//	if args.GasPrice == nil {
+//		price, err := b.SuggestPrice(ctx)
+//		if err != nil {
+//			return err
+//		}
+//		args.GasPrice = (*hexutil.Big)(price)
+//	}
+//	if args.Value == nil {
+//		args.Value = new(hexutil.Big)
+//	}
+//	if args.Nonce == nil {
+//		nonce, err := b.GetPoolNonce(ctx, args.From)
+//		if err != nil {
+//			return err
+//		}
+//		args.Nonce = (*hexutil.Uint64)(&nonce)
+//	}
+//	return nil
+//}
+//
+//func (args *SendTxArgs) String() string {
+//	return fmt.Sprintf("From=%v,To=%v,Gas=%v,GasPrice=%v,Nonce=%v",
+//		args.From, args.To, args.Gas, args.GasPrice, *(args.Nonce))
+//}
+//
+//func (args *SendTxArgs) toTransaction(txType uint64) *types.Transaction {
+//	data := &types.WanLegacyTx{
+//		Txtype:   txType,
+//		To:       args.To,
+//		Nonce:    uint64(*args.Nonce),
+//		Gas:      (*big.Int)(args.Gas).Uint64(),
+//		GasPrice: (*big.Int)(args.GasPrice),
+//		Value:    (*big.Int)(args.Value),
+//		Data:     args.Data,
+//	}
+//	return types.NewTx(data)
+//}
 
-// prepareSendTxArgs is a helper function that fills in default values for unspecified tx fields.
-func (args *SendTxArgs) setDefaults(ctx context.Context, b Backend) error {
-	if args.Gas == nil {
-		args.Gas = (*hexutil.Big)(big.NewInt(defaultGas))
-	}
-	if args.GasPrice == nil {
-		price, err := b.SuggestPrice(ctx)
-		if err != nil {
-			return err
-		}
-		args.GasPrice = (*hexutil.Big)(price)
-	}
-	if args.Value == nil {
-		args.Value = new(hexutil.Big)
-	}
-	if args.Nonce == nil {
-		nonce, err := b.GetPoolNonce(ctx, args.From)
-		if err != nil {
-			return err
-		}
-		args.Nonce = (*hexutil.Uint64)(&nonce)
-	}
-	return nil
-}
-
-func (args *SendTxArgs) String() string {
+func (args *TransactionArgs) String() string {
 	return fmt.Sprintf("From=%v,To=%v,Gas=%v,GasPrice=%v,Nonce=%v",
-		args.From, args.To, args.Gas, args.GasPrice, *(args.Nonce))
-}
-
-func (args *SendTxArgs) toTransaction(txType uint64) *types.Transaction {
-	data := &types.WanLegacyTx{
-		Txtype:   txType,
-		To:       args.To,
-		Nonce:    uint64(*args.Nonce),
-		Gas:      (*big.Int)(args.Gas).Uint64(),
-		GasPrice: (*big.Int)(args.GasPrice),
-		Value:    (*big.Int)(args.Value),
-		Data:     args.Data,
-	}
-	return types.NewTx(data)
+		args.from(), args.To, args.Gas, args.GasPrice, *(args.Nonce))
 }
 
 // submitTransaction is a helper function that submits tx to txPool and logs a message.
@@ -421,9 +427,9 @@ func submitTransaction(ctx context.Context, b Backend, tx *types.Transaction) (c
 	return tx.Hash(), nil
 }
 
-func (s *PublicTransactionPoolAPI) SendPosTransaction(ctx context.Context, args SendTxArgs) (common.Hash, error) {
+func (s *PublicTransactionPoolAPI) SendPosTransaction(ctx context.Context, args TransactionArgs) (common.Hash, error) {
 	// Look up the wallet containing the requested signer
-	account := accounts.Account{Address: args.From}
+	account := accounts.Account{Address: args.from()}
 
 	wallet, err := s.b.AccountManager().Find(account)
 	if err != nil {
@@ -433,8 +439,8 @@ func (s *PublicTransactionPoolAPI) SendPosTransaction(ctx context.Context, args 
 	if args.Nonce == nil {
 		// Hold the addresse's mutex around signing to prevent concurrent assignment of
 		// the same nonce to multiple accounts.
-		s.nonceLock.LockAddr(args.From)
-		defer s.nonceLock.UnlockAddr(args.From)
+		s.nonceLock.LockAddr(args.from())
+		defer s.nonceLock.UnlockAddr(args.from())
 	}
 
 	// Set some sanity defaults and terminate on failure
@@ -443,7 +449,7 @@ func (s *PublicTransactionPoolAPI) SendPosTransaction(ctx context.Context, args 
 	}
 	log.Info("SendPosTransaction", "args", args.String())
 	// Assemble the transaction and sign with the wallet
-	tx := args.toTransaction(uint64(types.POS_TX))
+	tx := args.ToTransaction()
 
 	var chainID *big.Int
 
@@ -626,8 +632,8 @@ func (s *PublicTransactionPoolAPI) GenerateOneTimeAddress(ctx context.Context, w
 	return hexutil.Encode(rawWanAddr[:]), nil
 }
 
-func (args *SendTxArgs) toOTATransaction() *types.Transaction {
-	return types.NewOTATransaction(uint64(*args.Nonce), *args.To, (*big.Int)(args.Value), (*big.Int)(args.Gas), (*big.Int)(args.GasPrice), args.Data)
+func (args *TransactionArgs) toOTATransaction() *types.Transaction {
+	return types.NewOTATransaction(uint64(*args.Nonce), *args.To, (*big.Int)(args.Value), (*big.Int)(args.Value), (*big.Int)(args.GasPrice), args.data())
 }
 
 func (s *PrivateAccountAPI) GetOTABalance(ctx context.Context, blockNr rpc.BlockNumber) (*big.Int, error) {

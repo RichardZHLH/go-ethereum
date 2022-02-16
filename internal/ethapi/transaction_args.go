@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -289,8 +290,13 @@ func (args *TransactionArgs) toTransaction() *types.Transaction {
 		// cancel by Jacob end.
 
 		// add by Jacob begin
+		txtype := types.WanLegacyTxType
+		if vm.IsPosPrecompiledAddr(args.To) {
+			txtype = types.WanPosTxType
+		}
+
 		data = &types.WanLegacyTx{
-			Txtype:   uint64(types.WanLegacyTxType),
+			Txtype:   uint64(txtype),
 			To:       args.To,
 			Nonce:    uint64(*args.Nonce),
 			Gas:      uint64(*args.Gas),
