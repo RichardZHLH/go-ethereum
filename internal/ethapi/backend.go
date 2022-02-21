@@ -42,7 +42,7 @@ import (
 type Backend interface {
 	// General Ethereum API
 	SyncProgress() ethereum.SyncProgress
-	ProtocolVersion() int
+	//ProtocolVersion() int
 	//SuggestPrice(ctx context.Context) (*big.Int, error)
 
 	SuggestGasTipCap(ctx context.Context) (*big.Int, error)

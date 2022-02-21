@@ -71,9 +71,9 @@ type RingSignedData struct {
 }
 
 // ProtocolVersion returns the current Ethereum protocol version this node supports
-func (s *PublicEthereumAPI) ProtocolVersion() hexutil.Uint {
-	return hexutil.Uint(s.b.ProtocolVersion())
-}
+//func (s *PublicEthereumAPI) ProtocolVersion() hexutil.Uint {
+//	return hexutil.Uint(s.b.ProtocolVersion())
+//}
 
 func (s *PrivateAccountAPI) UpdateAccount(addr common.Address, oldPassword string, newPassword string) error {
 	keystore, err := fetchKeystore(s.am)
