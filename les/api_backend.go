@@ -331,8 +331,3 @@ func (b *LesApiBackend) StateAtBlock(ctx context.Context, block *types.Block, re
 func (b *LesApiBackend) StateAtTransaction(ctx context.Context, block *types.Block, txIndex int, reexec uint64) (core.Message, vm.BlockContext, *state.StateDB, error) {
 	return b.eth.stateAtTransaction(ctx, block, txIndex, reexec)
 }
-
-//todo tbi
-func (b *LesApiBackend) SuggestPrice(ctx context.Context) (*big.Int, error) {
-	return nil, nil
-}

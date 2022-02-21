@@ -271,7 +271,7 @@ func (c *ChainConfig) IsPosBlockNumber(n *big.Int) bool {
 
 var (
 	isPosActive    = false
-	isLondonForked = true
+	isLondonForked = false
 	TestnetChainId = TestnetChainConfig.ChainID.Int64()
 	MainnetChainId = MainnetChainConfig.ChainID.Int64()
 )

@@ -17,7 +17,6 @@
 package eth
 
 import (
-	"fmt"
 	"math/big"
 	"sync/atomic"
 	"time"
@@ -115,7 +114,6 @@ func (cs *chainSyncer) loop() {
 
 	for {
 		if op := cs.nextSyncOp(); op != nil {
-			log.Trace("chainSyncer::loop", "op", fmt.Sprintf("%#v", op))
 			cs.startSync(op)
 		}
 		select {
@@ -149,11 +147,7 @@ func (cs *chainSyncer) nextSyncOp() *chainSyncOp {
 	}
 
 	// Ensure we're at minimum peer count.
-
-	//minPeers := defaultMinSyncPeers
-	//todo need change back when discovery is ready
-	minPeers := 1
-	log.Debug("chainSyncer::nextSyncOp", "cs.forced", cs.forced, "peers.len()", cs.handler.peers.len())
+	minPeers := defaultMinSyncPeers
 	if cs.forced {
 		minPeers = 1
 	} else if minPeers > cs.handler.maxPeers {
@@ -173,7 +167,6 @@ func (cs *chainSyncer) nextSyncOp() *chainSyncOp {
 		mode = downloader.SnapSync
 	}
 	op := peerToSyncOp(mode, peer)
-	log.Debug("chainSyncer::nextSyncOp", "op.td.Cmp(ourTD)", op.td.Cmp(ourTD))
 	if op.td.Cmp(ourTD) <= 0 {
 		return nil // We're in sync.
 	}

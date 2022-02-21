@@ -49,7 +49,7 @@ const (
 	DynamicFeeTxType = 2
 
 	WanLegacyTxType  = 1
-	WanTestnetTxType = 1 // TODO
+	WanTestnetTxType = 2 // TODO
 	WanPrivTxType    = 6
 	WanPosTxType     = 7
 	WanJupiterTxType = 0xFF
@@ -136,14 +136,14 @@ func (tx *Transaction) DecodeRLP(s *rlp.Stream) error {
 		return err
 	case kind == rlp.List:
 		// It's a legacy transaction.
-		b,_ := s.Raw()
+		b, _ := s.Raw()
 		var inner WanLegacyTx
-		err:= rlp.DecodeBytes(b, &inner)
+		err := rlp.DecodeBytes(b, &inner)
 		if err == nil {
 			tx.setDecoded(&inner, int(rlp.ListSize(size)))
-		}else{
+		} else {
 			var inner2 LegacyTx
-			err2:= rlp.DecodeBytes(b, &inner2)
+			err2 := rlp.DecodeBytes(b, &inner2)
 			if err2 == nil {
 				tx.setDecoded(&inner2, int(rlp.ListSize(size)))
 			}
@@ -418,7 +418,7 @@ func (tx *Transaction) Size() common.StorageSize {
 func (tx *Transaction) IsValidType() bool {
 	// TODO check how many types we need.
 	if !params.IsLondonActive() {
-		if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanTestnetTxType  || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
+		if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanTestnetTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
 			return true
 		}
 	} else {
@@ -684,7 +684,7 @@ func (m Message) Data() []byte           { return m.data }
 func (m Message) AccessList() AccessList { return m.accessList }
 func (m Message) IsFake() bool           { return m.isFake }
 
-func (m Message) TxType() uint64         { return m.txType }
+func (m Message) TxType() uint64 { return m.txType }
 
 // copyAddressPtr copies an address.
 func copyAddressPtr(a *common.Address) *common.Address {

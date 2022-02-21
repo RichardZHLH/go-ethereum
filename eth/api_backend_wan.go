@@ -16,15 +16,10 @@
 
 package eth
 
-import (
-	"context"
-)
-import "math/big"
-
 func (b *EthAPIBackend) ProtocolVersion() int {
 	return b.eth.EthVersion()
 }
 
-func (b *EthAPIBackend) SuggestPrice(ctx context.Context) (*big.Int, error) {
-	return b.gpo.SuggestTipCap(ctx)
-}
+//func (b *EthAPIBackend) SuggestPrice(ctx context.Context) (*big.Int, error) {
+//	return b.gpo.SuggestTipCap(ctx)
+//}
