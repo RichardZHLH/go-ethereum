@@ -26,7 +26,5 @@ func (b *EthAPIBackend) ProtocolVersion() int {
 }
 
 func (b *EthAPIBackend) SuggestPrice(ctx context.Context) (*big.Int, error) {
-	//todo check the gas price
-	//return b.gpo.SuggestTipCap(ctx)
-	return big.NewInt(0).SetUint64(1000000000), nil
+	return b.gpo.SuggestTipCap(ctx)
 }

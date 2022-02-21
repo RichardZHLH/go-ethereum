@@ -326,8 +326,7 @@ func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 		panic(err)
 	}
 	for addr, account := range g.Alloc {
-		//todo need delete below log.Info
-		log.Info("ToBlock", "addr", hexutil.Encode(addr.Bytes()))
+		log.Debug("ToBlock", "addr", hexutil.Encode(addr.Bytes()))
 		statedb.AddBalance(addr, account.Balance)
 		statedb.SetCode(addr, account.Code)
 		statedb.SetNonce(addr, account.Nonce)

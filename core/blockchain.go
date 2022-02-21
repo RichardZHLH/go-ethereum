@@ -46,7 +46,12 @@ import (
 	"github.com/ethereum/go-ethereum/pos/posconfig"
 	posUtil "github.com/ethereum/go-ethereum/pos/util"
 	"github.com/ethereum/go-ethereum/trie"
-	lru "github.com/hashicorp/golang-lru"
+	"github.com/hashicorp/golang-lru"
+)
+
+var (
+	ErrSecurityViolated = errors.New("reorg length is more than BlockSecurityParam")
+	ErrInsufficientCQ   = errors.New("chain quality is too low")
 )
 
 var (
@@ -392,8 +397,7 @@ func NewBlockChain(db ethdb.Database,
 	// the head block (ethash cache or clique voting snapshot). Might as well do
 	// it in advance.
 
-	//todo need uncomment below code, need check header of Pow by pow engine, check header of pos by pos engine.
-	// bc.engine.VerifyHeader(bc, bc.CurrentHeader(), true)
+	//bc.engine.VerifyHeader(bc, bc.CurrentHeader(), true)
 
 	// Check the current state of the block hashes and make sure that we do not have any of the bad blocks in our chain
 	for hash := range BadHashes {
@@ -410,6 +414,29 @@ func NewBlockChain(db ethdb.Database,
 			}
 		}
 	}
+
+	t := time.Now()
+	//check the blokc cq and keep it in cache
+	for i := bc.CurrentBlock().NumberU64(); i > posconfig.Pow2PosUpgradeBlockNumber; i-- {
+		blkHeader := bc.GetHeaderByNumber(i)
+		epochid, slotid := posUtil.CalEpochSlotID(blkHeader.Time)
+
+		flatSlotId := epochid*posconfig.SlotCount + slotid
+		bc.cqCache.Add(flatSlotId, blkHeader.Number.Uint64())
+
+		if i == bc.CurrentBlock().NumberU64() {
+			bc.cqLastSlot = flatSlotId
+		}
+
+		if (bc.cqLastSlot - flatSlotId) > posconfig.SlotSecurityParam {
+			break
+		}
+	}
+	log.Info("loaded cq cache", "eclapsed", time.Since(t), "length", bc.cqCache.Len())
+
+	epid, slid := posUtil.CalEpochSlotID(uint64(time.Now().Unix()))
+	//record the restarting slot point
+	bc.checkCQStartSlot = epid*posconfig.SlotCount + slid
 
 	// Load any existing snapshot, regenerating it if loading failed
 	if bc.cacheConfig.SnapshotLimit > 0 {
@@ -1277,6 +1304,35 @@ func (bc *BlockChain) WriteBlockWithState(block *types.Block, receipts []*types.
 // writeBlockWithState writes the block and all associated state to the database,
 // but is expects the chain mutex to be held.
 func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.Receipt, logs []*types.Log, state *state.StateDB, emitHeadEvent bool) (status WriteStatus, err error) {
+
+	// chain quality check begin
+	epid, _ := posUtil.CalEpochSlotID(block.Time())
+	// cq, _ := bc.ChainQuality(epid, slid)
+	// log.Trace("current chain", "quality", cq, "block number", block.NumberU64())
+	if bc.Config().IsPosActive && epid > posconfig.FirstEpochId+1 {
+
+		//res, _ := bc.ChainRestartStatus()
+
+		if !bc.restartSucess {
+			restartEpid := bc.checkCQStartSlot / posconfig.SlotCount
+			if (int64)(epid)-(int64)(restartEpid) > 2 {
+				log.Info("set restart success", "current epid", epid, "restart epochid", restartEpid)
+				bc.SetChainRestartSuccess()
+			}
+		}
+
+		if !bc.isWriteBlockSecure(block) {
+
+			if bc.restartSucess {
+				//only worked after passing sync target block - 2*secpara
+				if bc.biggerThanCriticalBlock(block) {
+					return NonStatTy, ErrInsufficientCQ
+				}
+			}
+		}
+	}
+	// chain quality check end
+
 	if bc.insertStopped() {
 		return NonStatTy, errInsertionInterrupted
 	}
@@ -1421,7 +1477,7 @@ func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.
 			posUtil.UpdateEpochBlock(block)
 
 			flatSlotId := epid*posconfig.SlotCount + slotId
-			//			bc.cqCache.Add(flatSlotId, block.Number().Uint64()) // TODO MERGE crash
+			bc.cqCache.Add(flatSlotId, block.Number().Uint64())
 			bc.cqLastSlot = flatSlotId
 
 		}
@@ -2272,9 +2328,4 @@ func (bc *BlockChain) RegisterSwitchEngine(agent consensus.EngineSwitcher) {
 
 func (bc *BlockChain) PrependRegisterSwitchEngine(agent consensus.EngineSwitcher) {
 	bc.agents = append([]consensus.EngineSwitcher{agent}, bc.agents...)
-}
-
-func (bc *BlockChain) ChainQuality(epochid uint64, slotid uint64) (uint64, error) {
-	//todo add chainquality code
-	return 0, nil
 }

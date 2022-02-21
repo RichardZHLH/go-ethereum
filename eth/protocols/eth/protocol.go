@@ -155,7 +155,7 @@ func (hn *HashOrNumber) EncodeRLP(w io.Writer) error {
 
 // DecodeRLP is a specialized decoder for HashOrNumber to decode the contents
 // into either a block hash or a block number.
-func (hn *HashOrNumber) DecodeRLP(s *rlp.Stream) error {   // TODO WHY???? change it ????
+func (hn *HashOrNumber) DecodeRLP(s *rlp.Stream) error {
 	_, size, _ := s.Kind()
 	origin, err := s.Raw()
 	if err == nil {

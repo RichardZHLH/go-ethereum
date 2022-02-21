@@ -458,8 +458,6 @@ func (e *Epocher) IsGenerateRBPSuc(epochID uint64) bool {
 
 //get epochLeaders of epochID in localdb
 func (e *Epocher) GetEpochLeaders(epochID uint64) [][]byte {
-
-	// TODO: how to cache these
 	epArray := posdb.GetEpochLeaderGroup(epochID)
 	wa, err := e.GetWhiteArrayByEpochId(epochID)
 	if err == nil {
@@ -471,7 +469,6 @@ func (e *Epocher) GetEpochLeaders(epochID uint64) [][]byte {
 
 }
 func (e *Epocher) GetRBProposer(epochID uint64) [][]byte {
-	// TODO: how to cache these
 	rbArray := posdb.GetRBProposerGroup(epochID)
 	return rbArray
 
@@ -600,7 +597,6 @@ func (e *Epocher) GetProposerBn256PK(epochID uint64, idx uint64, addr common.Add
 	}
 }
 
-// TODO Is this  right?
 func CalEpochProbabilityStaker(staker *vm.StakerInfo, epochID uint64) (infors []vm.ClientProbability, totalProbability *big.Int, err error) {
 	if staker.StakingEpoch == 0 && staker.LockEpochs != 0 {
 		if posconfig.FirstEpochId == 0 {
@@ -892,7 +888,6 @@ func StakeOutRun(stateDb *state.StateDB, epochID uint64, chainId int64) bool {
 
 		// check the renew
 		if epochID+vm.QuitDelay >= staker.StakingEpoch+staker.LockEpochs {
-			// TODO: how to apply changed FeeRate
 			if staker.NextLockEpochs != 0 {
 				staker.LockEpochs = staker.NextLockEpochs
 				//staker.FeeRate = staker.NextFeeRate

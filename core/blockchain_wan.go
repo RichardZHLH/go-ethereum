@@ -20,15 +20,12 @@ package core
 import (
 	"errors"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethdb"
-
-	"github.com/ethereum/go-ethereum/pos/posdb"
-
 	"github.com/ethereum/go-ethereum/core/types"
-
+	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
-
 	"github.com/ethereum/go-ethereum/pos/posconfig"
+	"github.com/ethereum/go-ethereum/pos/posdb"
+	"github.com/ethereum/go-ethereum/pos/util"
 	posUtil "github.com/ethereum/go-ethereum/pos/util"
 )
 
@@ -192,4 +189,182 @@ func PeekChainHeight(db ethdb.Database) uint64 {
 	}
 
 	return GetBlockNumber(db, head)
+}
+
+// Count blocks in front of specified block within 2k slots(exclude the specified block!!!).
+// pos block number begin with 1, epoc and slot index begin from 0
+//posconfig.SlotSecurityParam
+func (bc *BlockChain) getBlocksCountIn2KSlots(blk *types.Block, secPara uint64) int {
+	epochId, slotId := posUtil.CalEpochSlotID(blk.Time())
+	endFlatSlotId := epochId*posconfig.SlotCount + slotId
+
+	if endFlatSlotId == 0 {
+		return 0
+	}
+
+	startFlatSlotId := uint64(0)
+	if endFlatSlotId >= secPara {
+		startFlatSlotId = endFlatSlotId - secPara
+	}
+
+	n := 0
+
+	blkHeader := blk.Header()
+	blkNumber := blk.NumberU64()
+	for {
+
+		blkNumber = blkHeader.Number.Uint64() - 1
+		blkHeader = bc.GetHeaderByNumber(blkNumber)
+
+		if nil == blkHeader {
+			//never reached, because ppow blocks, safely remove this code?
+			break
+		}
+
+		if blkHeader.Number.Cmp(bc.chainConfig.PosFirstBlock) < 0 {
+			break
+		}
+
+		epochId, slotId = posUtil.CalEpochSlotID(blkHeader.Time)
+		flatSlotId := epochId*posconfig.SlotCount + slotId
+		if flatSlotId < startFlatSlotId || flatSlotId >= endFlatSlotId {
+			break
+		}
+		n = n + 1
+
+		if flatSlotId == uint64(0) {
+			break
+		}
+	}
+
+	return n
+}
+
+func (bc *BlockChain) ChainQualityHistory(epochid uint64, slotid uint64) (uint64, error) {
+	curBlk := bc.CurrentBlock()
+	startBlkNumber := curBlk.NumberU64() - posconfig.BlockSecurityParam
+
+	for {
+
+		bh := bc.GetHeaderByNumber(startBlkNumber)
+		if bh != nil {
+			blkEpid, blkSlid := posUtil.CalEpSlbyTd(bh.Difficulty.Uint64())
+			if epochid <= blkEpid && blkSlid <= slotid {
+				break
+			}
+		}
+
+		startBlkNumber--
+		if startBlkNumber < util.FirstPosBlockNumber() {
+			return uint64(0), nil
+		}
+	}
+
+	tblk := bc.GetBlockByNumber(startBlkNumber)
+	blocksIn2K := bc.getBlocksCountIn2KSlots(tblk, posconfig.SlotSecurityParam)
+
+	quality := blocksIn2K * 1000 / (posconfig.SlotSecurityParam)
+
+	return uint64(quality), nil
+}
+
+func (bc *BlockChain) isWriteBlockSecure(block *types.Block) bool {
+
+	epochId, slotId := posUtil.CalEpochSlotID(block.Time())
+
+	endFlatSlotId := epochId*posconfig.SlotCount + slotId
+	startId := endFlatSlotId - posconfig.SlotSecurityParam - 1
+
+	if bc.cqCache.Len() > posconfig.BlockSecurityParam {
+
+		if startId > bc.cqLastSlot {
+			bc.cqCache.Purge()
+		} else {
+			k := bc.cqLastSlot - posconfig.SlotSecurityParam
+			for ; k <= startId; k++ {
+				bc.cqCache.Remove(k)
+			}
+		}
+
+		blocksIn2K := bc.cqCache.Len()
+
+		return blocksIn2K > posconfig.K
+	}
+
+	return false
+}
+
+func (bc *BlockChain) ChainQuality(epochid uint64, slotid uint64) (uint64, error) {
+
+	blocksIn2K := 0
+
+	curBlk := bc.CurrentBlock()
+
+	blkEpid, blkSlid := posUtil.CalEpSlbyTd(curBlk.Difficulty().Uint64())
+	blkSlots := blkEpid*posconfig.SlotCount + blkSlid
+
+	expSlots := epochid*posconfig.SlotCount + slotid
+
+	//get chainquality in history
+	if expSlots < blkSlots-posconfig.BlockSecurityParam {
+		return bc.ChainQualityHistory(epochid, slotid)
+	}
+
+	if expSlots >= (blkSlots+posconfig.SlotSecurityParam) || (epochid == posconfig.FirstEpochId && slotid == 0) {
+		return 0, errors.New("wrong epoid or slotid")
+	}
+
+	//lastBlock := bc.epochGene.rbLeaderSelector.GetEpochLastBlkNumber(epochid)
+	checkSlots := uint64(0)
+
+	lastBlock := posUtil.GetEpochBlock(blkEpid)
+	for i := lastBlock; i > 0; i-- {
+
+		curBlkHeader := bc.GetHeaderByNumber(i)
+		blkEpid, blkSlid = posUtil.CalEpSlbyTd(curBlkHeader.Difficulty.Uint64())
+		checkSlots = blkEpid*posconfig.SlotCount + blkSlid
+
+		if checkSlots <= expSlots {
+			break
+		}
+	}
+
+	//if the gap is empty block,then the quality is 0
+	diff := expSlots - checkSlots
+	if uint64(diff) >= posconfig.SlotSecurityParam {
+		return uint64(0), nil
+	} else {
+
+		flatSlotId := epochid*posconfig.SlotCount + slotid
+
+		cacheBeginId := bc.cqLastSlot - posconfig.SlotSecurityParam
+		if flatSlotId <= bc.cqLastSlot && flatSlotId > cacheBeginId && bc.cqCache.Len() > posconfig.BlockSecurityParam {
+
+			for ; flatSlotId > cacheBeginId; flatSlotId-- {
+				blks, ok := bc.cqCache.Get(flatSlotId)
+				if ok && blks != 0 {
+					blocksIn2K++
+				}
+			}
+		}
+
+		if blocksIn2K == 0 {
+			blocksIn2K = bc.getBlocksCountIn2KSlots(curBlk, posconfig.SlotSecurityParam-diff)
+		}
+
+		quality := blocksIn2K * 1000 / (posconfig.SlotSecurityParam)
+
+		return uint64(quality), nil
+	}
+
+}
+
+func (bc *BlockChain) biggerThanCriticalBlock(block *types.Block) bool {
+
+	diff := int(posconfig.Cfg().SyncTargetBlokcNum - block.NumberU64())
+	if diff > 2*posconfig.SlotSecurityParam {
+		return false
+	} else {
+		return true
+	}
 }

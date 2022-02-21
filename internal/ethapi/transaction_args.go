@@ -159,12 +159,13 @@ func (args *TransactionArgs) setDefaults(ctx context.Context, b Backend) error {
 			AccessList:           args.AccessList,
 		}
 		pendingBlockNr := rpc.BlockNumberOrHashWithNumber(rpc.PendingBlockNumber)
+		log.Debug("before DoEstimateGas")
 		estimated, err := DoEstimateGas(ctx, b, callArgs, pendingBlockNr, b.RPCGasCap())
 		if err != nil {
 			return err
 		}
 		args.Gas = &estimated
-		log.Trace("Estimate gas usage automatically", "gas", args.Gas)
+		log.Debug("Estimate gas usage automatically", "gas", args.Gas)
 	}
 	if args.ChainID == nil {
 		id := (*hexutil.Big)(b.ChainConfig().ChainID)
@@ -240,7 +241,7 @@ func (args *TransactionArgs) ToMessage(globalGasCap uint64, baseFee *big.Int) (t
 	if args.AccessList != nil {
 		accessList = *args.AccessList
 	}
-	msg := types.NewMessage(addr, args.To, 0, value, gas, gasPrice, gasFeeCap, gasTipCap, data, accessList, false, true)
+	msg := types.NewMessage(addr, args.To, 0, value, gas, gasPrice, gasFeeCap, gasTipCap, data, accessList, true)
 	return msg, nil
 }
 
@@ -277,17 +278,6 @@ func (args *TransactionArgs) toTransaction() *types.Transaction {
 			AccessList: *args.AccessList,
 		}
 	default:
-		//todo use wanLegacyTx to add the jupetor txtype.
-		// cancel by Jacob begin
-		//data = &types.LegacyTx{
-		//	To:       args.To,
-		//	Nonce:    uint64(*args.Nonce),
-		//	Gas:      uint64(*args.Gas),
-		//	GasPrice: (*big.Int)(args.GasPrice),
-		//	Value:    (*big.Int)(args.Value),
-		//	Data:     args.data(),
-		//}
-		// cancel by Jacob end.
 
 		// add by Jacob begin
 		txtype := types.WanLegacyTxType

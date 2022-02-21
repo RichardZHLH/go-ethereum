@@ -196,17 +196,18 @@ func (s *SLS) getSlotLeaderProofByGenesis(PrivateKey *ecdsa.PrivateKey, epochID 
 		}
 
 		// add by Jacob begin
-		// preEpochLeader exsist but build SMA error.
+		// preEpochLeader exist but build SMA error.
 		if !isDefault && isGenesis {
 			return s.getSlotLeaderProofByGenesis(PrivateKey, epRecovery, slotID)
 		}
-		// preEpochLeader exsist but build SMA error.
+		// preEpochLeader not exist and build SMA error.
 		if isDefault && isGenesis {
 			goto genesisDeault
 		}
+		// preEpochLeader not exist but SMA be generated successfully
 		if isDefault && !isGenesis {
 			log.Error("getSlotLeaderProof Mars should never come here")
-			//todo panic or not?
+			panic("preEpochLeader not exist but SMA be generated successfully")
 		}
 		// add by Jacob end
 	}

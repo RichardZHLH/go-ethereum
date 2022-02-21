@@ -443,8 +443,6 @@ func (d *Downloader) getMode() SyncMode {
 func (d *Downloader) syncWithPeer(p *peerConnection, hash common.Hash, td *big.Int) (err error) {
 
 	log.Debug("syncWithPeer xxxxxxxxxxxxxxxxxxxx StartEvent xxxxxxxxxxxxxxxxxxxxxxxxx")
-
-	//todo should post startEvent{}
 	d.mux.Post(StartEvent{})
 	defer func() {
 		// reset on error

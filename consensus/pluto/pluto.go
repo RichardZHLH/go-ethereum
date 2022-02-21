@@ -706,51 +706,9 @@ func (c *Pluto) Prepare(chain consensus.ChainHeaderReader, header *types.Header)
 	header.Nonce = types.BlockNonce{}
 
 	number := header.Number.Uint64()
-
-	// Assemble the voting snapshot to check which votes make sense
-	//snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
-	//if err != nil {
-	//	return err
-	//}
-	//if number%c.config.Epoch != 0 {
-	//	c.lock.RLock()
-	//
-	//	// Gather all the proposals that make sense voting on
-	//	addresses := make([]common.Address, 0, len(c.proposals))
-	//	for address, authorize := range c.proposals {
-	//		if snap.validVote(address, authorize) {
-	//			addresses = append(addresses, address)
-	//		}
-	//	}
-	//	// If there's pending proposals, cast a vote on them
-	//	if len(addresses) > 0 {
-	//		header.Coinbase = addresses[rand.Intn(len(addresses))]
-	//		if c.proposals[header.Coinbase] {
-	//			copy(header.Nonce[:], nonceAuthVote)
-	//		} else {
-	//			copy(header.Nonce[:], nonceDropVote)
-	//		}
-	//	}
-	//	c.lock.RUnlock()
-	//}
-	// Set the correct difficulty
-	// header.Difficulty = CalcDifficulty(snap, c.signer)
 	header.Difficulty = big.NewInt(1)
 
-	// Ensure the extra data has all it's components
-	//if len(header.Extra) < extraVanity {
-	//	header.Extra = append(header.Extra, bytes.Repeat([]byte{0x00}, extraVanity-len(header.Extra))...)
-	//}
-	//header.Extra = header.Extra[:extraVanity]
-
-	//if number%c.config.Epoch == 0 {
-	//	for _, signer := range snap.signers() {
-	//		header.Extra = append(header.Extra, signer[:]...)
-	//	}
-	//}
 	header.Extra = append(header.Extra, make([]byte, extraSeal)...)
-
-	// Mix digest is reserved for now, set to empty
 	header.MixDigest = common.Hash{}
 
 	// Ensure the timestamp has the correct delay
@@ -758,70 +716,14 @@ func (c *Pluto) Prepare(chain consensus.ChainHeaderReader, header *types.Header)
 	if parent == nil {
 		return consensus.ErrUnknownAncestor
 	}
-	//header.Time = new(big.Int).Add(parent.Time, new(big.Int).SetUint64(c.config.Period))
-	//if header.Time.Int64() < time.Now().Unix() {
-	//	header.Time = big.NewInt(time.Now().Unix())
-	//}
 	curEpochId, curSlotId := util.CalEpochSlotID(header.Time)
-
-	//if posconfig.EpochBaseTime == 0 {
-	//	cur := time.Now().Unix()
-	//	hcur := cur - (cur % posconfig.SlotTime) + posconfig.SlotTime
-	//	header.Time = big.NewInt(hcur)
-	//} else {
-	//	//if curEpochId != 0 || curSlotId != 0 {
-	//		header.Time = big.NewInt(int64(posconfig.EpochBaseTime + (curEpochId*posconfig.SlotCount+curSlotId)*posconfig.SlotTime))
-	//	//}
-	//}
 
 	epochSlotId := uint64(1)
 	epochSlotId += curSlotId << 8
 	epochSlotId += curEpochId << 32
-
-	// TODO: the Difficulty is duplicated with time. should delete it?
 	header.Difficulty.SetUint64(epochSlotId)
 	return nil
 }
-
-// Finalize implements consensus.Engine, ensuring no uncles are set, nor block
-// rewards given, and returns the final block.
-//func (c *Pluto) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
-//	epochID, slotID := util.GetEpochSlotIDFromDifficulty(header.Difficulty)
-//	if posconfig.FirstEpochId != 0 && epochID > posconfig.FirstEpochId+2 && epochID >= posconfig.IncentiveDelayEpochs && slotID > posconfig.IncentiveStartStage {
-//		log.Debug("--------Incentive Start--------", "number", header.Number.String(), "epochID", epochID)
-//		snap := state.Snapshot()
-//		if !incentive.Run(chain, state, epochID-posconfig.IncentiveDelayEpochs, header) {
-//			log.SyslogAlert("********Incentive Failed********", "number", header.Number.String(), "epochID", epochID)
-//			state.RevertToSnapshot(snap)
-//		} else {
-//			log.Debug("--------Incentive Finish--------", "number", header.Number.String(), "epochID", epochID)
-//		}
-//
-//		snap = state.Snapshot()
-//		if !epochLeader.StakeOutRun(state, epochID) {
-//			log.SyslogErr("Stake Out failed.")
-//			state.RevertToSnapshot(snap)
-//		}
-//	}
-//
-//	if chain.Config().ChainID.Int64() == params.TestnetChainId && header.Number.Uint64() == posconfig.TestnetAdditionalBlock {
-//		log.Info("Finalize testnet", "blockNumber", posconfig.TestnetAdditionalBlock)
-//		state.AddBalance(posconfig.PosOwnerAddrTestnet, posconfig.TestnetAdditionalValue)
-//		epochLeader.CleanInactiveValidator(state, epochID)
-//		//epochLeader.ListValidator(state)
-//	}
-//
-//	// No block rewards in PoA, so the state remains as is and uncles are dropped
-//	state.Finalise(true)
-//	header.Root = state.IntermediateRoot(true /*chain.Config().IsEIP158(header.Number)*/)
-//
-//	header.UncleHash = types.CalcUncleHash(nil)
-//
-//	// Assemble and return the final block for sealing
-//	return types.NewBlock(header, txs, nil, receipts, trie.NewStackTrie(nil)), nil
-//}
-
-//Finalize(chain ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction,uncles []*types.Header)
 
 func (c *Pluto) Finalize(chain consensus.ChainHeaderReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header) {
 	epochID, slotID := util.GetEpochSlotIDFromDifficulty(header.Difficulty)
@@ -884,7 +786,6 @@ func (c *Pluto) Authorize(signer common.Address, signFn SignerFn, key *keystore.
 // the local signing credentials.
 
 func (c *Pluto) Seal(chain consensus.ChainHeaderReader, block *types.Block, results chan<- *types.Block, stop <-chan struct{}) error {
-	// todo check the input parameter results
 
 	header := block.Header()
 
@@ -902,15 +803,7 @@ func (c *Pluto) Seal(chain consensus.ChainHeaderReader, block *types.Block, resu
 	signer, signFn, key := c.signer, c.signFn, c.key
 	c.lock.RUnlock()
 
-	// Bail out if we're unauthorized to sign a block
-	// snap, err := c.snapshot(chain, number-1, header.ParentHash, nil)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if _, authorized := snap.Signers[signer]; !authorized {
-	// 	return nil, errUnauthorized
-	// }
-	// check if our trun
+	// check if our turn
 	epochSlotId := uint64(1)
 	epochId, slotId := util.CalEpochSlotID(header.Time)
 	epochSlotId += slotId << 8
@@ -1019,16 +912,6 @@ func CalcDifficulty(snap *Snapshot, signer common.Address) *big.Int {
 	return new(big.Int).Set(diffNoTurn)
 }
 
-// APIs implements consensus.Engine, returning the user facing RPC API to allow
-// controlling the signer voting.
-//func (c *Pluto) APIs(chain consensus.ChainReader) []rpc.API {
-//	return []rpc.API{{
-//		Namespace: "pluto",
-//		Version:   "1.0",
-//		Service:   &API{chain: chain, pluto: c},
-//		Public:    false,
-//	}}
-//}
 func (c *Pluto) APIs(chain consensus.ChainHeaderReader) []rpc.API {
 	return []rpc.API{{
 		Namespace: "pluto",
@@ -1043,53 +926,10 @@ func (c *Pluto) Close() error {
 }
 
 func (ethash *Pluto) SealHash(header *types.Header) (hash common.Hash) {
-	//hasher := sha3.NewLegacyKeccak256()
-	//encodeSigHeader(hasher, header)
-	//hasher.(crypto.KeccakState).Read(hash[:])
-	//return hash
-	//return sigHash(header)
-
-	//todo Think it over
-	// return common.Hash{}
-
 	hasher := sha3.NewLegacyKeccak256()
-
-	/*
-		rlp.Encode(hasher, []interface{}{
-			header.ParentHash,
-			header.UncleHash,
-			//header.Coinbase,
-			header.Root,
-			header.TxHash,
-			header.ReceiptHash,
-			header.Bloom,
-			header.Difficulty,
-			header.Number,
-			header.GasLimit,
-			header.GasUsed,
-			header.Time,
-			//header.Extra[:len(header.Extra)-extraSeal], // Yes, this will panic if extra is too short
-			header.MixDigest,
-			header.Nonce,
-		})
-	*/
-// TODO the hash field is not enough.
 	rlp.Encode(hasher, []interface{}{
 		header.ParentHash,
-		//header.UncleHash,
-		////header.Coinbase,
-		//header.Root,
-		//header.TxHash,
-		//header.ReceiptHash,
-		//header.Bloom,
-		//header.Difficulty,
 		header.Number,
-		//header.GasLimit,
-		//header.GasUsed,
-		//header.Time,
-		////header.Extra[:len(header.Extra)-extraSeal], // Yes, this will panic if extra is too short
-		//header.MixDigest,
-		//header.Nonce,
 	})
 
 	hasher.Sum(hash[:0])

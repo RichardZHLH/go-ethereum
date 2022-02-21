@@ -481,9 +481,7 @@ func (w *worker) mainLoop() {
 	for {
 		select {
 		case req := <-w.newWorkCh:
-			//todo it is about block produce, change later.
-			fmt.Printf("req", req)
-
+			log.Debug(fmt.Sprintf("%v", req))
 			//w.commitNewWork(req.interrupt, req.noempty, req.timestamp)
 
 		case slotTime := <-w.chainSlotTimer:
@@ -534,39 +532,47 @@ func (w *worker) mainLoop() {
 			// Note all transactions received may not be continuous with transactions
 			// already included in the current mining block. These transactions will
 			// be automatically eliminated.
-			if !w.isRunning() && w.current != nil {
-				// If block is already full, abort
-				if gp := w.current.gasPool; gp != nil && gp.Gas() < params.TxGas {
-					continue
-				}
-				w.mu.RLock()
-				coinbase := w.coinbase
-				w.mu.RUnlock()
 
-				txs := make(map[common.Address]types.Transactions)
-				for _, tx := range ev.Txs {
-					acc, _ := types.Sender(w.current.signer, tx)
-					txs[acc] = append(txs[acc], tx)
-				}
-				txset := types.NewTransactionsByPriceAndNonce(w.current.signer, txs, w.current.header.BaseFee)
-				tcount := w.current.tcount
-				w.commitTransactions(txset, coinbase, nil)
-				// Only update the snapshot if any new transactons were added
-				// to the pending block
-				if tcount != w.current.tcount {
-					w.updateSnapshot()
-				}
-			} else {
-				// Special case, if the consensus engine is 0 period clique(dev mode),
-				// submit mining work here since all empty submission will be rejected
-				// by clique. Of course the advance sealing(empty submission) is disabled.
-				if w.chainConfig.Clique != nil && w.chainConfig.Clique.Period == 0 {
-					// todo it is about block produce, change later
-					// w.commitNewWork(nil, true, time.Now().Unix())
-				}
-			}
-			atomic.AddInt32(&w.newTxs, int32(len(ev.Txs)))
+			// Add by Jacob begin
+			log.Debug("worker:mainloop", "len(ev.Txs)", len(ev.Txs))
+			// Add by Jacob end
 
+			// cancel by hjacob end
+			/*
+				if !w.isRunning() && w.current != nil {
+					// If block is already full, abort
+					if gp := w.current.gasPool; gp != nil && gp.Gas() < params.TxGas {
+						continue
+					}
+					w.mu.RLock()
+					coinbase := w.coinbase
+					w.mu.RUnlock()
+
+					txs := make(map[common.Address]types.Transactions)
+					for _, tx := range ev.Txs {
+						acc, _ := types.Sender(w.current.signer, tx)
+						txs[acc] = append(txs[acc], tx)
+					}
+					txset := types.NewTransactionsByPriceAndNonce(w.current.signer, txs, w.current.header.BaseFee)
+					tcount := w.current.tcount
+					w.commitTransactions(txset, coinbase, nil)
+					// Only update the snapshot if any new transactons were added
+					// to the pending block
+					if tcount != w.current.tcount {
+						w.updateSnapshot()
+					}
+				} else {
+					// Special case, if the consensus engine is 0 period clique(dev mode),
+					// submit mining work here since all empty submission will be rejected
+					// by clique. Of course the advance sealing(empty submission) is disabled.
+					if w.chainConfig.Clique != nil && w.chainConfig.Clique.Period == 0 {
+						// todo it is about block produce, change later
+						// w.commitNewWork(nil, true, time.Now().Unix())
+					}
+				}
+				atomic.AddInt32(&w.newTxs, int32(len(ev.Txs)))
+			*/
+			// cancel by Jacob end
 		// System stopped
 		case <-w.exitCh:
 			return

@@ -64,7 +64,7 @@ func (tx *WanLegacyTx) copy() TxData {
 	cpy := &WanLegacyTx{
 		Txtype: tx.Txtype, // add by Jacob
 		Nonce:  tx.Nonce,
-		To:     tx.To, // TODO: copy pointed-to address
+		To:     copyAddressPtr(tx.To),
 		Data:   common.CopyBytes(tx.Data),
 		Gas:    tx.Gas,
 		// These are initialized below.

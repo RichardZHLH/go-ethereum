@@ -417,7 +417,7 @@ func (tx *Transaction) Size() common.StorageSize {
 
 func (tx *Transaction) IsValidType() bool {
 	// TODO check how many types we need.
-	if params.IsLondonActive() {
+	if !params.IsLondonActive() {
 		if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanTestnetTxType  || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
 			return true
 		}
@@ -632,7 +632,7 @@ type Message struct {
 	txType     uint64
 }
 
-func NewMessage(from common.Address, to *common.Address, nonce uint64, amount *big.Int, gasLimit uint64, gasPrice, gasFeeCap, gasTipCap *big.Int, data []byte, accessList AccessList, isFake bool, checkNonce bool) Message {
+func NewMessage(from common.Address, to *common.Address, nonce uint64, amount *big.Int, gasLimit uint64, gasPrice, gasFeeCap, gasTipCap *big.Int, data []byte, accessList AccessList, isFake bool) Message {
 	return Message{
 		from:       from,
 		to:         to,
@@ -645,7 +645,6 @@ func NewMessage(from common.Address, to *common.Address, nonce uint64, amount *b
 		data:       data,
 		accessList: accessList,
 		isFake:     isFake,
-		checkNonce: checkNonce,
 	}
 }
 
@@ -663,7 +662,6 @@ func (tx *Transaction) AsMessage(s Signer, baseFee *big.Int) (Message, error) {
 		txType:     uint64(tx.Type()),
 		accessList: tx.AccessList(),
 		isFake:     false,
-		checkNonce: true,
 	}
 	// If baseFee provided, set gasPrice to effectiveGasPrice.
 	if baseFee != nil {
@@ -685,7 +683,6 @@ func (m Message) Nonce() uint64          { return m.nonce }
 func (m Message) Data() []byte           { return m.data }
 func (m Message) AccessList() AccessList { return m.accessList }
 func (m Message) IsFake() bool           { return m.isFake }
-func (m Message) CheckNonce() bool       { return m.checkNonce }
 
 func (m Message) TxType() uint64         { return m.txType }
 

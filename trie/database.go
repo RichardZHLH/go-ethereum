@@ -393,6 +393,10 @@ func (db *Database) node(hash common.Hash) node {
 	// Content unavailable in memory, attempt to retrieve from disk
 	enc, err := db.diskdb.Get(hash[:])
 	if err != nil || enc == nil {
+		if err != nil {
+			log.Error("tire/database::node", err.Error())
+		}
+
 		return nil
 	}
 	if db.cleans != nil {

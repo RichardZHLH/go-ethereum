@@ -120,8 +120,7 @@ func (miner *Miner) update() {
 			}
 			switch ev.Data.(type) {
 			case downloader.StartEvent:
-				//todo should delete log
-				log.Info("Miner::update StartEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase, "canStart", canStart, "wasMining", miner.Mining())
+				log.Debug("Miner::update StartEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase, "canStart", canStart, "wasMining", miner.Mining())
 				wasMining := miner.Mining()
 				miner.worker.stop()
 				canStart = false
@@ -132,8 +131,7 @@ func (miner *Miner) update() {
 				}
 			case downloader.FailedEvent:
 				canStart = true
-				//todo should delete log
-				log.Info("Miner::update FailedEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase)
+				log.Debug("Miner::update FailedEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase)
 				if shouldStart {
 					miner.SetEtherbase(miner.coinbase)
 					miner.worker.start()
@@ -141,8 +139,7 @@ func (miner *Miner) update() {
 				}
 			case downloader.DoneEvent:
 				canStart = true
-				//todo should delete log
-				log.Info("Miner::update DoneEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase)
+				log.Debug("Miner::update DoneEvent", "shouldStart", shouldStart, "coinbase", miner.coinbase)
 				if shouldStart {
 					miner.SetEtherbase(miner.coinbase)
 					miner.worker.start()
@@ -180,7 +177,7 @@ func (miner *Miner) invokePosTimeLoop() {
 		log.Info("Invoke backendTimerLoop from miner start, pos active")
 		go miner.backendTimerLoop(miner.eth)
 	} else if !miner.eth.BlockChain().IsInPosStage() {
-		miner.worker.commitNewWork(nil, true, 0) //todo check the first parameters.
+		miner.worker.commitNewWork(nil, true, 0)
 	} else {
 		log.Info("Invoke backendTimerLoop from miner start, in PosStage")
 		go miner.backendTimerLoop(miner.eth)

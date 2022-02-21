@@ -18,9 +18,11 @@ package vm
 
 import (
 	"fmt"
+	"math/big"
 	"sort"
 
 	"github.com/ethereum/go-ethereum/params"
+	posutil "github.com/ethereum/go-ethereum/pos/util"
 	"github.com/holiman/uint256"
 )
 
@@ -98,7 +100,13 @@ func enable1344(jt *JumpTable) {
 
 // opChainID implements CHAINID opcode
 func opChainID(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
-	chainId, _ := uint256.FromBig(interpreter.evm.chainConfig.ChainID)
+	var retChainId uint64
+	if posutil.IsJupiterForkArrived() {
+		retChainId = params.JupiterChainId(interpreter.evm.chainConfig.ChainID.Uint64())
+	} else {
+		retChainId = uint64(interpreter.evm.chainConfig.ChainID.Uint64())
+	}
+	chainId, _ := uint256.FromBig(big.NewInt(0).SetUint64(retChainId))
 	scope.Stack.push(chainId)
 	return nil, nil
 }

@@ -375,7 +375,7 @@ func (pool *TxPool) loop() {
 			stales := int(atomic.LoadInt64(&pool.priced.stales))
 
 			if pending != prevPending || queued != prevQueued || stales != prevStales {
-				log.Debug("Transaction pool status report", "executable", pending, "queued", queued, "stales", stales)
+				log.Trace("Transaction pool status report", "executable", pending, "queued", queued, "stales", stales)
 				prevPending, prevQueued, prevStales = pending, queued, stales
 			}
 
@@ -585,6 +585,10 @@ func (pool *TxPool) local() map[common.Address]types.Transactions {
 // validateTx checks whether a transaction is valid according to the consensus
 // rules and adheres to some heuristic limits of the local node (price and size).
 func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
+
+	isNormalType := types.IsNormalTransaction(uint64(tx.Type()))
+	isPosType := types.IsPosTransaction(uint64(tx.Type()))
+
 	// Accept only legacy transactions until EIP-2718/2930 activates.
 
 	if !pool.eip2718 && !tx.IsValidType() {
@@ -629,11 +633,12 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 	}
 	// Ensure the transaction adheres to nonce ordering
 	if pool.currentState.GetNonce(from) > tx.Nonce() {
+		log.Trace("validateTx nonce too low", "tx.Nonce", tx.Nonce(), "nonce", pool.currentState.GetNonce(from), "from", from, "to", tx.To(), "isLocal", local)
 		return ErrNonceTooLow
 	}
 	// Transactor should have enough funds to cover the costs
 	// cost == V + GP * GL
-	if pool.currentState.GetBalance(from).Cmp(tx.Cost()) < 0 {
+	if (isNormalType || isPosType) && pool.currentState.GetBalance(from).Cmp(tx.Cost()) < 0 {
 		return ErrInsufficientFunds
 	}
 	// Ensure the transaction has more gas than the basic tx fee.
@@ -641,8 +646,17 @@ func (pool *TxPool) validateTx(tx *types.Transaction, local bool) error {
 	if err != nil {
 		return err
 	}
-	if tx.Gas() < intrGas {
-		return ErrIntrinsicGas
+
+	if isNormalType || isPosType {
+		if tx.Gas() < intrGas {
+			return ErrIntrinsicGas
+		}
+
+	} else {
+		err := ValidPrivacyTx(pool.currentState, from.Bytes(), tx.Data(), tx.GasPrice(), big.NewInt(0).SetUint64(intrGas), tx.Value(), big.NewInt(0).SetUint64(pool.currentMaxGas))
+		if err != nil {
+			return err
+		}
 	}
 	// Check precompile contracts transactions validation
 	if tx.To() != nil {
@@ -1241,7 +1255,7 @@ func (pool *TxPool) reset(oldHead, newHead *types.Header) {
 		newNum := newHead.Number.Uint64()
 
 		if depth := uint64(math.Abs(float64(oldNum) - float64(newNum))); depth > 64 {
-			log.Debug("Skipping deep transaction reorg", "depth", depth)
+			log.Trace("Skipping deep transaction reorg", "depth", depth)
 		} else {
 			// Reorg seems shallow enough to pull in all transactions into memory
 			var discarded, included types.Transactions
@@ -1261,7 +1275,7 @@ func (pool *TxPool) reset(oldHead, newHead *types.Header) {
 					return
 				}
 				// If the reorg ended up on a lower number, it's indicative of setHead being the cause
-				log.Debug("Skipping transaction reset caused by setHead",
+				log.Trace("Skipping transaction reset caused by setHead",
 					"old", oldHead.Hash(), "oldnum", oldNum, "new", newHead.Hash(), "newnum", newNum)
 				// We still need to update the current state s.th. the lost transactions can be readded by the user
 			} else {
@@ -1309,7 +1323,7 @@ func (pool *TxPool) reset(oldHead, newHead *types.Header) {
 	pool.currentMaxGas = newHead.GasLimit
 
 	// Inject any transactions discarded due to reorgs
-	log.Debug("Reinjecting stale transactions", "count", len(reinject))
+	log.Trace("Reinjecting stale transactions", "count", len(reinject))
 	senderCacher.recover(pool.signer, reinject)
 	pool.addTxsLocked(reinject, false)
 
@@ -1343,8 +1357,11 @@ func (pool *TxPool) promoteExecutables(accounts []common.Address) []*types.Trans
 		// Drop all transactions that are too costly (low balance or out of gas)
 		drops, _ := list.Filter(pool.currentState.GetBalance(addr), pool.currentMaxGas)
 		for _, tx := range drops {
-			hash := tx.Hash()
-			pool.all.Remove(hash)
+
+			if types.IsNormalTransaction(uint64(tx.Type())) || types.IsPosTransaction(uint64(tx.Type())) {
+				hash := tx.Hash()
+				pool.all.Remove(hash)
+			}
 		}
 		log.Trace("Removed unpayable queued transactions", "count", len(drops))
 		queuedNofundsMeter.Mark(int64(len(drops)))
@@ -1360,6 +1377,7 @@ func (pool *TxPool) promoteExecutables(accounts []common.Address) []*types.Trans
 			//pool.priced.Removed()
 			//queuedNofundsCounter.Inc(1)
 		}
+		log.Trace("Removed invalidPrivacy transactions", "count", len(invalidPrivacy))
 
 		// Remove all invalid pos transactions
 		invalidPos := list.InvalidPosRBTx(pool.currentState, pool.signer)
@@ -1372,6 +1390,7 @@ func (pool *TxPool) promoteExecutables(accounts []common.Address) []*types.Trans
 			//pool.priced.Removed()
 			//pendingNofundsCounter.Inc(1)
 		}
+		log.Trace("Removed invalidPos transactions", "count", len(invalidPos))
 
 		// Remove all invalid EL pos transactions
 		invalidPosEL := list.InvalidPosELTx(pool.currentState, pool.signer)
@@ -1384,6 +1403,7 @@ func (pool *TxPool) promoteExecutables(accounts []common.Address) []*types.Trans
 			//pool.priced.Removed()
 			//pendingNofundsCounter.Inc(1)
 		}
+		log.Trace("Removed invalidPosEL transactions", "count", len(invalidPosEL))
 
 		// Gather all executable transactions and promote them
 		readies := list.Ready(pool.pendingNonces.get(addr))
@@ -1408,10 +1428,10 @@ func (pool *TxPool) promoteExecutables(accounts []common.Address) []*types.Trans
 			queuedRateLimitMeter.Mark(int64(len(caps)))
 		}
 		// Mark all the items dropped as removed
-		pool.priced.Removed(len(forwards) + len(drops) + len(caps))
-		queuedGauge.Dec(int64(len(forwards) + len(drops) + len(caps)))
+		pool.priced.Removed(len(forwards) + len(drops) + len(caps) + len(invalidPrivacy) + len(invalidPos) + len(invalidPosEL))
+		queuedGauge.Dec(int64(len(forwards) + len(drops) + len(caps) + len(invalidPrivacy) + len(invalidPos) + len(invalidPosEL)))
 		if pool.locals.contains(addr) {
-			localGauge.Dec(int64(len(forwards) + len(drops) + len(caps)))
+			localGauge.Dec(int64(len(forwards) + len(drops) + len(caps) + len(invalidPrivacy) + len(invalidPos) + len(invalidPosEL)))
 		}
 		// Delete the entire queue entry if it became empty.
 		if list.Empty() {
@@ -1570,14 +1590,19 @@ func (pool *TxPool) demoteUnexecutables() {
 		olds := list.Forward(nonce)
 		for _, tx := range olds {
 			hash := tx.Hash()
+
+			list.Remove(tx) // add by Jacob
 			pool.all.Remove(hash)
 			log.Trace("Removed old pending transaction", "hash", hash)
+			log.Trace("low nonce", "hash", hash, "tx.nonce", tx.Nonce(), "nonce", nonce, "to", tx.To())
 		}
 		// Drop all transactions that are too costly (low balance or out of gas), and queue any invalids back for later
 		drops, invalids := list.Filter(pool.currentState.GetBalance(addr), pool.currentMaxGas)
 		for _, tx := range drops {
 			hash := tx.Hash()
 			log.Trace("Removed unpayable pending transaction", "hash", hash)
+
+			list.Remove(tx) // add by Jacob
 			pool.all.Remove(hash)
 		}
 		pendingNofundsMeter.Mark(int64(len(drops)))
@@ -1600,6 +1625,7 @@ func (pool *TxPool) demoteUnexecutables() {
 			//pool.priced.Removed()
 			//pendingNofundsCounter.Inc(1)
 
+			list.Remove(tx) // add by Jacob
 			pool.all.Remove(hash)
 		}
 
@@ -1612,6 +1638,7 @@ func (pool *TxPool) demoteUnexecutables() {
 			//pool.priced.Removed()
 			//pendingNofundsCounter.Inc(1)
 
+			list.Remove(tx) // add by Jacob
 			pool.all.Remove(hash)
 		}
 
@@ -1623,6 +1650,7 @@ func (pool *TxPool) demoteUnexecutables() {
 			//delete(pool.all, hash)
 			//pool.priced.Removed()
 			//pendingNofundsCounter.Inc(1)
+			list.Remove(tx) // add by Jacob
 			pool.all.Remove(hash)
 		}
 		// add by Jacob end

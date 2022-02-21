@@ -110,8 +110,6 @@ func (v *BlockValidator) ValidateState(block *types.Block, statedb *state.StateD
 	}
 	// Validate the received block's bloom with the one derived from the generated receipts.
 	// For valid blocks this should always validate to true.
-	//todo need delete below
-	//log.Info("===================", "receipts", fmt.Sprintf("%#v", *(receipts[0])))
 	rbloom := types.CreateBloom(receipts)
 	if rbloom != header.Bloom {
 		return fmt.Errorf("invalid bloom (remote: %x  local: %x)", header.Bloom, rbloom)
@@ -160,13 +158,5 @@ func CalcGasLimit(parent *types.Block, parentGasLimit, desiredLimit uint64) uint
 		}
 		return limit
 	}
-
-	//if limit > gasCeil { // TODO MERGE why???
-	//	//limit = parent.GasLimit() - decay
-	//	//if limit < gasCeil {
-	//	//	limit = gasCeil
-	//	//}
-	//	limit = gasCeil
-	//}
 	return limit
 }

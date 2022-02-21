@@ -285,11 +285,11 @@ func SetPosActive(active bool) {
 }
 
 func IsLondonActive() bool {
-	return isPosActive
+	return isLondonForked
 }
 
 func SetLondonActive(active bool) {
-	isPosActive = active
+	isLondonForked = active
 }
 
 func IsNoStaking() bool {

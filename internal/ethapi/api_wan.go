@@ -45,8 +45,8 @@ const (
 )
 
 var (
-//defaultGasPrice = big.NewInt(0).Mul(big.NewInt(18*params.Shannon), params.WanGasTimesFactor)
-//defaultGasPrice = big.NewInt(1 * params.Shannon)
+	//defaultGasPrice = big.NewInt(0).Mul(big.NewInt(18*params.Shannon), params.WanGasTimesFactor)
+	defaultGasPrice = big.NewInt(1 * params.Shannon)
 )
 
 var (
@@ -71,9 +71,9 @@ type RingSignedData struct {
 }
 
 // ProtocolVersion returns the current Ethereum protocol version this node supports
-//func (s *PublicEthereumAPI) ProtocolVersion() hexutil.Uint {
-//	return hexutil.Uint(s.b.ProtocolVersion())
-//}
+func (s *PublicEthereumAPI) ProtocolVersion() hexutil.Uint {
+	return hexutil.Uint(s.b.ProtocolVersion())
+}
 
 func (s *PrivateAccountAPI) UpdateAccount(addr common.Address, oldPassword string, newPassword string) error {
 	keystore, err := fetchKeystore(s.am)
@@ -289,20 +289,18 @@ func (s *PublicBlockChainAPI) GetSupportStampOTABalances(ctx context.Context) []
 func (s *PublicBlockChainAPI) rpcOutputBlock(b *types.Block, inclTx bool, fullTx bool) (map[string]interface{}, error) {
 	head := b.Header() // copies the header once
 	fields := map[string]interface{}{
-		"number":     (*hexutil.Big)(head.Number),
-		"hash":       b.Hash(),
-		"parentHash": head.ParentHash,
-		"nonce":      head.Nonce,
-		"mixHash":    head.MixDigest,
-		"sha3Uncles": head.UncleHash,
-		"logsBloom":  head.Bloom,
-		"stateRoot":  head.Root,
-		"miner":      head.Coinbase,
-		"difficulty": (*hexutil.Big)(head.Difficulty),
-		//"totalDifficulty": (*hexutil.Big)(s.b.GetTd(b.Hash())),
-		"totalDifficulty": (*hexutil.Big)(s.b.GetTd(nil, b.Hash())), //todo check the first parameter of GetTd
-		"extraData":       hexutil.Bytes(head.Extra),
-		//"size":             hexutil.Uint64(uint64(b.Size().Int64())),
+		"number":           (*hexutil.Big)(head.Number),
+		"hash":             b.Hash(),
+		"parentHash":       head.ParentHash,
+		"nonce":            head.Nonce,
+		"mixHash":          head.MixDigest,
+		"sha3Uncles":       head.UncleHash,
+		"logsBloom":        head.Bloom,
+		"stateRoot":        head.Root,
+		"miner":            head.Coinbase,
+		"difficulty":       (*hexutil.Big)(head.Difficulty),
+		"totalDifficulty":  (*hexutil.Big)(s.b.GetTd(nil, b.Hash())),
+		"extraData":        hexutil.Bytes(head.Extra),
 		"size":             b.Size().String(),
 		"gasLimit":         (*hexutil.Big)(big.NewInt(0).SetUint64(head.GasLimit)),
 		"gasUsed":          (*hexutil.Big)(big.NewInt(0).SetUint64(head.GasUsed)),

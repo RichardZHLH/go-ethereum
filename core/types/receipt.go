@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/log"
 	"io"
 	"math/big"
 	"unsafe"
@@ -199,6 +200,7 @@ func (r *Receipt) DecodeRLP(s *rlp.Stream) error {
 			}
 			return r.setFromRLP(dec)
 		}
+		log.Debug("Receipt:DecodeRLP ErrTxTypeNotSupported")
 		return ErrTxTypeNotSupported
 	default:
 		return rlp.ErrExpectedList
@@ -237,6 +239,7 @@ func (r *Receipt) decodeTyped(b []byte) error {
 		r.Type = b[0]
 		return r.setFromRLP(data)
 	default:
+		log.Debug("Receipt:decodeTyped ErrTxTypeNotSupported")
 		return ErrTxTypeNotSupported
 	}
 }

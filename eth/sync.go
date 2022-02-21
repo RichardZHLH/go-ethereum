@@ -115,8 +115,7 @@ func (cs *chainSyncer) loop() {
 
 	for {
 		if op := cs.nextSyncOp(); op != nil {
-			//todo should delete the log
-			log.Info("chainSyncer::loop", "op", fmt.Sprintf("%#v", op))
+			log.Trace("chainSyncer::loop", "op", fmt.Sprintf("%#v", op))
 			cs.startSync(op)
 		}
 		select {

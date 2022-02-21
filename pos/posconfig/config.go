@@ -41,7 +41,7 @@ const (
 
 	AvgRetDB      = "avgretdb"
 	ApolloEpochID = 18104
-	AugustEpochID = 18116 //TODO change it as mainnet 8.8
+	AugustEpochID = 18116
 
 	TestnetAdditionalBlock = 6661460
 )
