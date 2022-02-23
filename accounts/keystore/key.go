@@ -159,7 +159,7 @@ func NewKeyForDirectICAPEth(rand io.Reader) *Key {
 	}
 	key := newKeyFromECDSAEth(privateKeyECDSA)
 	if !strings.HasPrefix(key.Address.Hex(), "0x00") {
-		return NewKeyForDirectICAP(rand)
+		return NewKeyForDirectICAPEth(rand)
 	}
 	return key
 }

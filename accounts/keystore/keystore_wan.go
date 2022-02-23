@@ -21,6 +21,10 @@
 package keystore
 
 import (
+	"crypto/ecdsa"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -28,6 +32,36 @@ import (
 	"io/ioutil"
 	"time"
 )
+
+func (ks *KeyStore) ImportECDSA(priv1, priv2 *ecdsa.PrivateKey, passphrase string) (accounts.Account, error) {
+	ks.importMu.Lock()
+	defer ks.importMu.Unlock()
+
+	key := newKeyFromECDSA(priv1, priv2)
+	if ks.cache.hasAddress(key.Address) {
+		return accounts.Account{
+			Address: key.Address,
+		}, ErrAccountAlreadyExists
+	}
+	return ks.importKey(key, passphrase)
+}
+
+// Update changes the passphrase of an existing account.
+func (ks *KeyStore) Update(a accounts.Account, passphrase, newPassphrase string) error {
+	a, key, err := ks.getDecryptedKey(a, passphrase)
+	if err != nil {
+		return err
+	}
+	if key.PrivateKey2 == nil {
+		sk2, err := crypto.GenerateKey()
+		if err != nil {
+			return err
+		}
+		key.PrivateKey2 = sk2
+	}
+	updateWaddress(key)
+	return ks.storage.StoreKey(a.URL.Path, key, newPassphrase)
+}
 
 func (ks *KeyStore) ComputeOTAPPKeys(a accounts.Account, AX, AY, BX, BY string) ([]string, error) {
 	ks.mu.RLock()
@@ -129,4 +163,28 @@ func (ks *KeyStore) GetWanAddress(account accounts.Account) (common.WAddress, er
 
 	ret := unlockedKey.WAddress
 	return ret, nil
+}
+
+func (ks keyStorePlain) GetEncryptedKey(a common.Address, filename string) (*Key, error) {
+	return nil, nil
+}
+
+func (ks keyStorePlain) GetKeyFromKeyJson(addr common.Address, keyjson []byte, auth string) (*Key, error) {
+	key := new(Key)
+	if err := json.Unmarshal(keyjson, key); err != nil {
+		return nil, err
+	}
+	if key.Address != addr {
+		return nil, fmt.Errorf("key content mismatch: have address %x, want %x", key.Address, addr)
+	}
+	return key, nil
+}
+
+func (w *keystoreWallet) GetUnlockedKey(address common.Address) (*Key, error) {
+	value, ok := w.keystore.unlocked[address]
+	if !ok {
+		return nil, errors.New("can not found a unlock key of: " + address.Hex())
+	}
+
+	return value.Key, nil
 }

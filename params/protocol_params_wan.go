@@ -16,6 +16,8 @@
 
 package params
 
+import "math/big"
+
 const (
 	// ppow pos is larger than ppow
 	MaximumExtraDataSize uint64 = 400 // Maximum size extra data may be after Genesis.
@@ -38,4 +40,17 @@ const (
 	//SlsStgOnePerByteGas		uint64 = 20      // per byte gas for SlsStgOnePerByteGas
 	SlsStgTwoPerByteGas uint64 = 20 // per byte gas for SlsStgOnePerByteGas
 
+)
+
+var (
+	GasLimitBoundDivisor    uint64 = 1024 // The bound divisor of the gas limit, used in update calculations.
+	GasLimitBoundDivisorNew uint64 = 300  // The bound divisor of the gas limit, used in update calculations.
+	MinGasLimit             uint64 = 5000 // Minimum the gas limit may ever be.
+	MaxGasLimit                    = big.NewInt(105000000)
+	GenesisGasLimit         uint64 = 4712388                            // Gas limit of the Genesis block.
+	NewTargeGasLimit               = big.NewInt(10000000)               // Gas limit raise to 1000w
+	TargetGasLimit                 = new(big.Int).Set(NewTargeGasLimit) // The artificial target
+	WanGasTimesFactor              = big.NewInt(10)
+
+	//WanGasTimesFactor	   = big.NewInt(1)
 )

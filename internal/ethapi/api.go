@@ -378,23 +378,7 @@ func (s *PrivateAccountAPI) ImportRawKeyEth(privkey string, password string) (co
 	if err != nil {
 		return common.Address{}, err
 	}
-	acc, err := ks.ImportECDSA(key, key, password)
-	return acc.Address, err
-}
-func (s *PrivateAccountAPI) ImportRawKey(privkey0, privkey1 string, password string) (common.Address, error) {
-	key0, err := crypto.HexToECDSA(privkey0)
-	if err != nil {
-		return common.Address{}, err
-	}
-	key1, err := crypto.HexToECDSA(privkey1)
-	if err != nil {
-		return common.Address{}, err
-	}
-	ks, err := fetchKeystore(s.am)
-	if err != nil {
-		return common.Address{}, err
-	}
-	acc, err := ks.ImportECDSA(key0, key1, password)
+	acc, err := ks.ImportECDSAEth(key, password)
 	return acc.Address, err
 }
 
@@ -1781,7 +1765,6 @@ func (s *PublicTransactionPoolAPI) SendRawTransaction(ctx context.Context, input
 	}
 
 	tx1 := tx
-	fmt.Println("infoxxxxxxxxxxxxxxx:", tx.IsLegacyType(), posutil.IsJupiterForkArrived(), types.IsEthereumTx(tx.ChainId().Uint64()))
 	if types.IsEthereumTx(tx.ChainId().Uint64()) && tx.IsLegacyType() && posutil.IsJupiterForkArrived() {
 		data := &types.WanLegacyTx{
 			Txtype:   uint64(types.JUPITER_TX),

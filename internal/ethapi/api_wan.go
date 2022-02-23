@@ -45,11 +45,6 @@ const (
 )
 
 var (
-	//defaultGasPrice = big.NewInt(0).Mul(big.NewInt(18*params.Shannon), params.WanGasTimesFactor)
-	defaultGasPrice = big.NewInt(1 * params.Shannon)
-)
-
-var (
 	ErrInvalidWAddress                  = errors.New("Invalid Waddress, try again")
 	ErrFailToGeneratePKPairFromWAddress = errors.New("Fail to generate publickey pair from WAddress")
 	ErrFailToGeneratePKPairSlice        = errors.New("Fail to generate publickey pair hex slice")
@@ -685,4 +680,20 @@ func (s *PrivateAccountAPI) ShowPublicKey(addr common.Address, passwd string) ([
 		return nil, errors.New("invalid address")
 	}
 	return pubs, nil
+}
+func (s *PrivateAccountAPI) ImportRawKey(privkey0, privkey1 string, password string) (common.Address, error) {
+	key0, err := crypto.HexToECDSA(privkey0)
+	if err != nil {
+		return common.Address{}, err
+	}
+	key1, err := crypto.HexToECDSA(privkey1)
+	if err != nil {
+		return common.Address{}, err
+	}
+	ks, err := fetchKeystore(s.am)
+	if err != nil {
+		return common.Address{}, err
+	}
+	acc, err := ks.ImportECDSA(key0, key1, password)
+	return acc.Address, err
 }

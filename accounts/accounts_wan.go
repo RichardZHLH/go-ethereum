@@ -14,15 +14,17 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
-package params
+// Package accounts implements high level Ethereum account management.
+package accounts
 
-// These are the multipliers for ether denominations.
-// Example: To get the wei value of an amount in 'gwei', use
-//
-//    new(big.Int).Mul(value, big.NewInt(params.GWei))
-//
-const (
-	Wei   = 1
-	GWei  = 1e9
-	Ether = 1e18
+import (
+	"github.com/ethereum/go-ethereum/common"
 )
+
+type WanWallet interface {
+	// GetWanAddress represents the wallet to retrieve corresponding wanchain public address for a specific ordinary account/address
+	GetWanAddress(account Account) (common.WAddress, error)
+
+	// ComputeOTAPPKeys returns one-time-address pair
+	ComputeOTAPPKeys(account Account, AX, AY, BX, BY string) ([]string, error)
+}

@@ -466,18 +466,6 @@ func (ks *KeyStore) ImportECDSAEth(priv *ecdsa.PrivateKey, passphrase string) (a
 	}
 	return ks.importKey(key, passphrase)
 }
-func (ks *KeyStore) ImportECDSA(priv1, priv2 *ecdsa.PrivateKey, passphrase string) (accounts.Account, error) {
-	ks.importMu.Lock()
-	defer ks.importMu.Unlock()
-
-	key := newKeyFromECDSA(priv1, priv2)
-	if ks.cache.hasAddress(key.Address) {
-		return accounts.Account{
-			Address: key.Address,
-		}, ErrAccountAlreadyExists
-	}
-	return ks.importKey(key, passphrase)
-}
 
 func (ks *KeyStore) importKey(key *Key, passphrase string) (accounts.Account, error) {
 	a := accounts.Account{Address: key.Address, URL: accounts.URL{Scheme: KeyStoreScheme, Path: ks.storage.JoinPath(keyFileName(key.Address))}}
@@ -490,19 +478,11 @@ func (ks *KeyStore) importKey(key *Key, passphrase string) (accounts.Account, er
 }
 
 // Update changes the passphrase of an existing account.
-func (ks *KeyStore) Update(a accounts.Account, passphrase, newPassphrase string) error {
+func (ks *KeyStore) UpdateEth(a accounts.Account, passphrase, newPassphrase string) error {
 	a, key, err := ks.getDecryptedKey(a, passphrase)
 	if err != nil {
 		return err
 	}
-	if key.PrivateKey2 == nil {
-		sk2, err := crypto.GenerateKey()
-		if err != nil {
-			return err
-		}
-		key.PrivateKey2 = sk2
-	}
-	updateWaddress(key)
 	return ks.storage.StoreKey(a.URL.Path, key, newPassphrase)
 }
 

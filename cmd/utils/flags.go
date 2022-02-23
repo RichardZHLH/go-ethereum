@@ -136,7 +136,7 @@ var (
 	}
 	NetworkIdFlag = cli.Uint64Flag{
 		Name:  "networkid",
-		Usage: "Explicitly set network id (integer)(For testnets: use --testnet, --rinkeby, --goerli instead)",
+		Usage: "Explicitly set network id (integer)(For testnets: use --testnet instead)",
 		Value: ethconfig.Defaults.NetworkId,
 	}
 	MainnetFlag = cli.BoolFlag{
@@ -153,7 +153,7 @@ var (
 	}
 	RopstenFlag = cli.BoolFlag{
 		Name:  "ropsten",
-		Usage: "Testnet network: pre-configured proof-of-work test network",
+		Usage: "Ropsten network: pre-configured proof-of-work test network",
 	}
 	DeveloperFlag = cli.BoolFlag{
 		Name:  "dev",
@@ -1610,8 +1610,8 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 3
 		}
-		cfg.Genesis = core.DefaultTestnetGenesisBlock()
-		SetDNSDiscoveryDefaults(cfg, params.TestnetGenesisHash)
+		cfg.Genesis = core.DefaultRopstenGenesisBlock()
+		SetDNSDiscoveryDefaults(cfg, params.RopstenGenesisHash)
 	case ctx.GlobalBool(RinkebyFlag.Name):
 		if !ctx.GlobalIsSet(NetworkIdFlag.Name) {
 			cfg.NetworkId = 4

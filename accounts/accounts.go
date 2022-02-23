@@ -153,13 +153,6 @@ type Wallet interface {
 	SignTxWithPassphrase(account Account, passphrase string, tx *types.Transaction, chainID *big.Int) (*types.Transaction, error)
 }
 
-type WanWallet interface {
-	// GetWanAddress represents the wallet to retrieve corresponding wanchain public address for a specific ordinary account/address
-	GetWanAddress(account Account) (common.WAddress, error)
-
-	// ComputeOTAPPKeys returns one-time-address pair
-	ComputeOTAPPKeys(account Account, AX, AY, BX, BY string) ([]string, error)
-}
 // Backend is a "wallet provider" that may contain a batch of accounts they can
 // sign transactions with and upon request, do so.
 type Backend interface {

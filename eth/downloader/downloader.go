@@ -441,18 +441,13 @@ func (d *Downloader) getMode() SyncMode {
 // syncWithPeer starts a block synchronization based on the hash chain from the
 // specified peer and head hash.
 func (d *Downloader) syncWithPeer(p *peerConnection, hash common.Hash, td *big.Int) (err error) {
-
-	log.Debug("syncWithPeer xxxxxxxxxxxxxxxxxxxx StartEvent xxxxxxxxxxxxxxxxxxxxxxxxx")
 	d.mux.Post(StartEvent{})
 	defer func() {
 		// reset on error
 		if err != nil {
-			log.Debug("syncWithPeer xxxxxxxxxxxxxxxxxxxx FailedEvent xxxxxxxxxxxxxxxxxxxxxxxxx")
 			d.mux.Post(FailedEvent{err})
 		} else {
 			latest := d.lightchain.CurrentHeader()
-
-			log.Debug("syncWithPeer xxxxxxxxxxxxxxxxxxxx DoneEvent xxxxxxxxxxxxxxxxxxxxxxxxx")
 			d.mux.Post(DoneEvent{latest})
 		}
 	}()

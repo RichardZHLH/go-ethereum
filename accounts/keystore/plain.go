@@ -59,22 +59,3 @@ func (ks keyStorePlain) JoinPath(filename string) string {
 	}
 	return filepath.Join(ks.keysDirPath, filename)
 }
-
-// add by Jacob begin
-// TODO: to be implemented
-func (ks keyStorePlain) GetEncryptedKey(a common.Address, filename string) (*Key, error) {
-	return nil, nil
-}
-
-func (ks keyStorePlain) GetKeyFromKeyJson(addr common.Address, keyjson []byte, auth string) (*Key, error) {
-	key := new(Key)
-	if err := json.Unmarshal(keyjson, key); err != nil {
-		return nil, err
-	}
-	if key.Address != addr {
-		return nil, fmt.Errorf("key content mismatch: have address %x, want %x", key.Address, addr)
-	}
-	return key, nil
-}
-
-// add by Jacob end

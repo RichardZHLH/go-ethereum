@@ -17,8 +17,6 @@
 package keystore
 
 import (
-	"errors"
-	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum"
@@ -149,13 +147,4 @@ func (w *keystoreWallet) SignTxWithPassphrase(account accounts.Account, passphra
 	}
 	// Account seems valid, request the keystore to sign
 	return w.keystore.SignTxWithPassphrase(account, passphrase, tx, chainID)
-}
-
-func (w *keystoreWallet) GetUnlockedKey(address common.Address) (*Key, error) {
-	value, ok := w.keystore.unlocked[address]
-	if !ok {
-		return nil, errors.New("can not found a unlock key of: " + address.Hex())
-	}
-
-	return value.Key, nil
 }
