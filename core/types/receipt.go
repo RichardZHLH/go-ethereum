@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/ethereum/go-ethereum/log"
 	"io"
 	"math/big"
 	"unsafe"
@@ -200,7 +199,6 @@ func (r *Receipt) DecodeRLP(s *rlp.Stream) error {
 			}
 			return r.setFromRLP(dec)
 		}
-		log.Debug("Receipt:DecodeRLP ErrTxTypeNotSupported")
 		return ErrTxTypeNotSupported
 	default:
 		return rlp.ErrExpectedList
@@ -239,7 +237,6 @@ func (r *Receipt) decodeTyped(b []byte) error {
 		r.Type = b[0]
 		return r.setFromRLP(data)
 	default:
-		log.Debug("Receipt:decodeTyped ErrTxTypeNotSupported")
 		return ErrTxTypeNotSupported
 	}
 }
@@ -391,19 +388,20 @@ func (rs Receipts) Len() int { return len(rs) }
 func (rs Receipts) EncodeIndex(i int, w *bytes.Buffer) {
 	r := rs[i]
 	data := &receiptRLP{r.statusEncoding(), r.CumulativeGasUsed, r.Bloom, r.Logs}
-	rlp.Encode(w, data)
-
-	//switch r.Type {
-	//case LegacyTxType:
-	//	rlp.Encode(w, data)
-	//case AccessListTxType:
-	//	w.WriteByte(AccessListTxType)
-	//	rlp.Encode(w, data)
-	//default:
-	//	// For unsupported types, write nothing. Since this is for
-	//	// DeriveSha, the error will be caught matching the derived hash
-	//	// to the block.
-	//}
+	switch r.Type {
+	case LegacyTxType:
+		rlp.Encode(w, data)
+	case AccessListTxType:
+		w.WriteByte(AccessListTxType)
+		rlp.Encode(w, data)
+	case DynamicFeeTxType:
+		w.WriteByte(DynamicFeeTxType)
+		rlp.Encode(w, data)
+	default:
+		// For unsupported types, write nothing. Since this is for
+		// DeriveSha, the error will be caught matching the derived hash
+		// to the block.
+	}
 }
 
 // DeriveFields fills the receipts with their computed fields based on consensus

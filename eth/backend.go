@@ -99,8 +99,6 @@ type Ethereum struct {
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 }
 
-const ETHVersion = 100
-
 // New creates a new Ethereum object (including the
 // initialisation of the common Ethereum object)
 func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
@@ -604,4 +602,4 @@ func (s *Ethereum) SwitchEngine(engine consensus.Engine) {
 	miner.PosInit(s)
 }
 
-func (s *Ethereum) EthVersion() int { return ETHVersion }
+

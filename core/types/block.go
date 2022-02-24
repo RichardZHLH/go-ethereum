@@ -269,6 +269,8 @@ func (b *Block) EncodeRLP(w io.Writer) error {
 	})
 }
 
+// TODO: copies
+
 func (b *Block) Uncles() []*Header          { return b.uncles }
 func (b *Block) Transactions() Transactions { return b.transactions }
 

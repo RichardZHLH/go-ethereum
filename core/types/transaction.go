@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"container/heap"
 	"errors"
-	"fmt"
 	"github.com/ethereum/go-ethereum/params"
 	"io"
 	"math/big"
@@ -199,20 +198,16 @@ func (tx *Transaction) decodeTyped(b []byte) (TxData, error) {
 		return nil, errEmptyTypedTx
 	}
 	switch b[0] {
+	case AccessListTxType:
+		var inner AccessListTx
+		err := rlp.DecodeBytes(b[1:], &inner)
+		return &inner, err
 	case DynamicFeeTxType:
 		var inner DynamicFeeTx
 		err := rlp.DecodeBytes(b[1:], &inner)
 		return &inner, err
 	default:
-		var inner WanLegacyTx
-		err := rlp.DecodeBytes(b[:], &inner)
-		if err != nil {
-			fmt.Println("decodeTyped:", err)
-			var inner2 LegacyTx
-			err2 := rlp.DecodeBytes(b[:], &inner2)
-			return &inner2, err2
-		}
-		return &inner, err
+		return nil, ErrTxTypeNotSupported
 	}
 }
 
@@ -262,8 +257,6 @@ func isProtectedV(V *big.Int) bool {
 
 // Protected says whether the transaction is replay-protected.
 func (tx *Transaction) Protected() bool {
-	// return tx.v != nil && isProtectedV(tx.V)
-	// TODO what is this meaning?????????????
 	switch tx := tx.inner.(type) {
 	case *LegacyTx:
 		return tx.V != nil && isProtectedV(tx.V)
@@ -416,17 +409,9 @@ func (tx *Transaction) Size() common.StorageSize {
 }
 
 func (tx *Transaction) IsValidType() bool {
-	// TODO check how many types we need.
-	if !params.IsLondonActive() {
-		if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanTestnetTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
-			return true
-		}
-	} else {
-		if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == DynamicFeeTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
-			return true
-		}
+	if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == DynamicFeeTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
+		return true
 	}
-
 	return false
 }
 func (tx *Transaction) IsLegacyType() bool {
@@ -628,7 +613,6 @@ type Message struct {
 	data       []byte
 	accessList AccessList
 	isFake     bool
-	checkNonce bool
 	txType     uint64
 }
 
