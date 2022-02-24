@@ -29,6 +29,7 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -36,8 +37,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/crypto/randentropy"
 	"golang.org/x/crypto/scrypt"
+	"io"
 	"io/ioutil"
 )
 
@@ -114,7 +115,11 @@ func EncryptOnePrivateKey(privateKey *ecdsa.PrivateKey, auth string, scryptN, sc
 	}
 
 	authArray := []byte(auth)
-	salt := randentropy.GetEntropyCSPRNG(32)
+
+	salt := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
+		panic("reading from crypto/rand failed: " + err.Error())
+	}
 	derivedKey, err := scrypt.Key(authArray, salt, scryptN, scryptR, scryptP, scryptDKLen)
 	if err != nil {
 		return nil, err
@@ -123,7 +128,10 @@ func EncryptOnePrivateKey(privateKey *ecdsa.PrivateKey, auth string, scryptN, sc
 	encryptKey := derivedKey[:16]
 	keyBytes := math.PaddedBigBytes(privateKey.D, 32)
 
-	iv := randentropy.GetEntropyCSPRNG(aes.BlockSize) // 16
+	iv := make([]byte, aes.BlockSize) // 16
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		panic("reading from crypto/rand failed: " + err.Error())
+	}
 
 	cipherText, err := aesCTRXOR(encryptKey, keyBytes, iv)
 	if err != nil {
