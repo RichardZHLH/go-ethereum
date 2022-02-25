@@ -16,41 +16,35 @@
 
 package core
 
-import (
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/params"
-	"math/big"
-)
-
-func IntrinsicGas_gwan(data []byte, to *common.Address, homestead bool) *big.Int {
-	contractCreation := to == nil
-
-	igas := new(big.Int)
-	if contractCreation && homestead {
-		igas.SetUint64(params.TxGasContractCreation)
-	} else {
-		igas.SetUint64(params.TxGas)
-	}
-	if len(data) > 0 {
-		var nz int64
-		for _, byt := range data {
-			if byt != 0 {
-				nz++
-			}
-		}
-		m := big.NewInt(nz)
-		m.Mul(m, new(big.Int).SetUint64(params.TxDataNonZeroGas))
-		igas.Add(igas, m)
-		m.SetInt64(int64(len(data)) - nz)
-		m.Mul(m, new(big.Int).SetUint64(params.TxDataZeroGas))
-		igas.Add(igas, m)
-	}
-
-	// reduce gas used for pos tx
-	if vm.IsPosPrecompiledAddr(to) {
-		igas = igas.Div(igas, big.NewInt(10))
-	}
-
-	return igas
-}
+//
+//func IntrinsicGas_gwan(data []byte, to *common.Address, homestead bool) *big.Int {
+//	contractCreation := to == nil
+//
+//	igas := new(big.Int)
+//	if contractCreation && homestead {
+//		igas.SetUint64(params.TxGasContractCreation)
+//	} else {
+//		igas.SetUint64(params.TxGas)
+//	}
+//	if len(data) > 0 {
+//		var nz int64
+//		for _, byt := range data {
+//			if byt != 0 {
+//				nz++
+//			}
+//		}
+//		m := big.NewInt(nz)
+//		m.Mul(m, new(big.Int).SetUint64(params.TxDataNonZeroGas))
+//		igas.Add(igas, m)
+//		m.SetInt64(int64(len(data)) - nz)
+//		m.Mul(m, new(big.Int).SetUint64(params.TxDataZeroGas))
+//		igas.Add(igas, m)
+//	}
+//
+//	// reduce gas used for pos tx
+//	if vm.IsPosPrecompiledAddr(to) {
+//		igas = igas.Div(igas, big.NewInt(10))
+//	}
+//
+//	return igas
+//}

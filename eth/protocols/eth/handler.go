@@ -219,9 +219,10 @@ func handleMessage(backend Backend, peer *Peer) error {
 	defer msg.Discard()
 
 	var handlers = eth65
-	if peer.Version() >= ETH66 {
-		handlers = eth66
-	}
+	//if peer.Version() >= ETH67 { // Left in as a sample when new protocol is added
+	//	handlers = eth67
+	//}
+
 	// Track the amount of time it takes to serve the request and run the handler
 	if metrics.Enabled {
 		h := fmt.Sprintf("%s/%s/%d/%#02x", p2p.HandleHistName, ProtocolName, peer.Version(), msg.Code)

@@ -26,13 +26,13 @@ func (s *SLS) sendSlotTx(payload []byte, posSender SendTxFn) error {
 	to := vm.GetSlotLeaderSCAddress()
 	data := hexutil.Bytes(payload)
 	//gas := core.IntrinsicGas(data, &to, true)
-	gas := core.IntrinsicGas_gwan(data, &to, true)
+	gas, _ := core.IntrinsicGasWan(data, nil, false, false, false, &to)
 
 	arg := map[string]interface{}{}
 	arg["from"] = s.key.Address
 	arg["to"] = vm.GetSlotLeaderSCAddress()
 	arg["value"] = (*hexutil.Big)(big.NewInt(0))
-	arg["gas"] = (*hexutil.Big)(gas)
+	arg["gas"] = (*hexutil.Big)(big.NewInt(0).SetUint64(gas))
 	arg["txType"] = types.POS_TX
 	arg["data"] = data
 	log.Debug("Write data of payload", "length", len(data))

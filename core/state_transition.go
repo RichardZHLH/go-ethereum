@@ -367,7 +367,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 		var requiredGas uint64
 		if types.IsNormalTransaction(tyType) || types.IsPosTransaction(tyType) {
 			requiredGas = st.gasUsed()
-			st.refundGas()
+			st.refundGas(params.RefundQuotient)
 			usedGas = st.gasUsed()
 			//log.Trace("calc used gas, normal tx", "required gas", requiredGas, "used gas", usedGas)
 		} else if types.IsPrivacyTransaction(tyType) {
@@ -377,7 +377,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 		}
 	} else {
 		// After EIP-3529: refunds are capped to gasUsed / 5
-		st.refundGas()//params.RefundQuotientEIP3529)
+		st.refundGas(params.RefundQuotientEIP3529)
 	}
 	effectiveTip := st.gasPrice
 	if london {
@@ -401,9 +401,9 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	}, nil
 }
 
-func (st *StateTransition) refundGas() {
-	// Apply refund counter, capped to half of the used gas. // TODO why?
-	refund := st.gasUsed() / 2
+func (st *StateTransition) refundGas(refundQuotient uint64) {
+	// Apply refund counter, capped to a refund quotient
+	refund := st.gasUsed() / refundQuotient
 	if refund > st.state.GetRefund() {
 		refund = st.state.GetRefund()
 	}

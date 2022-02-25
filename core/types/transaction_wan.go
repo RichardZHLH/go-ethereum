@@ -34,7 +34,7 @@ const (
 )
 
 func IsNormalTransaction(txType uint64) bool {
-	return txType == NORMAL_TX || txType == 0 || txType == 2 || txType == JUPITER_TX  || txType==0xff // some of old tx used , which is allowed.
+	return txType == NORMAL_TX || txType == 0 || txType == 2 || txType == JUPITER_TX || txType == 0xff // some of old tx used , which is allowed.
 }
 func IsPosTransaction(txType uint64) bool {
 	return txType == POS_TX
@@ -42,9 +42,10 @@ func IsPosTransaction(txType uint64) bool {
 func IsPrivacyTransaction(txType uint64) bool {
 	return txType == PRIVACY_TX
 }
-func IsValidTransactionType(txType uint64) bool {
-	return (txType == NORMAL_TX || txType == PRIVACY_TX || txType == POS_TX || txType == JUPITER_TX)
-}
+
+//func IsValidTransactionType(txType uint64) bool {
+//	return (txType == NORMAL_TX || txType == PRIVACY_TX || txType == POS_TX || txType == JUPITER_TX)
+//}
 
 func IsEthereumTx(chainId uint64) bool {
 	return (chainId > 100)

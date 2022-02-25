@@ -697,13 +697,13 @@ func (rb *RandomBeacon) doSendRBTx(payload []byte) error {
 	to := vm.GetRBAddress()
 	data := hexutil.Bytes(payload)
 	//gas := core.IntrinsicGas(data, &to, true)
-	gas := core.IntrinsicGas_gwan(data, &to, true)
+	gas, _ := core.IntrinsicGasWan(data, nil, false, false, false, &to)
 
 	arg := map[string]interface{}{}
 	arg["from"] = rb.getTxFrom()
 	arg["to"] = to
 	arg["value"] = (*hexutil.Big)(big.NewInt(0))
-	arg["gas"] = (*hexutil.Big)(gas)
+	arg["gas"] = (*hexutil.Big)(big.NewInt(0).SetUint64(gas))
 	arg["txType"] = types.POS_TX
 	arg["data"] = data
 
