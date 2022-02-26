@@ -33,7 +33,7 @@ func (s *SLS) sendSlotTx(payload []byte, posSender SendTxFn) error {
 	arg["to"] = vm.GetSlotLeaderSCAddress()
 	arg["value"] = (*hexutil.Big)(big.NewInt(0))
 	arg["gas"] = (*hexutil.Big)(big.NewInt(0).SetUint64(gas))
-	arg["txType"] = types.POS_TX
+	arg["txType"] = types.WanPosTxType
 	arg["data"] = data
 	log.Debug("Write data of payload", "length", len(data))
 

@@ -299,8 +299,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		chainConfig.SetPosActive()
 	}
 	return eth, nil
-
-	return eth, nil
 }
 
 func makeExtraData(extra []byte) []byte {

@@ -704,7 +704,7 @@ func (rb *RandomBeacon) doSendRBTx(payload []byte) error {
 	arg["to"] = to
 	arg["value"] = (*hexutil.Big)(big.NewInt(0))
 	arg["gas"] = (*hexutil.Big)(big.NewInt(0).SetUint64(gas))
-	arg["txType"] = types.POS_TX
+	arg["txType"] = types.WanPosTxType
 	arg["data"] = data
 
 	log.SyslogInfo("do send rb tx", "payload len", len(payload))

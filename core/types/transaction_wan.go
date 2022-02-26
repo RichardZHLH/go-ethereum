@@ -23,24 +23,21 @@ func newOTATransaction(nonce uint64, to *common.Address, amount, gasLimit, gasPr
 	if to == nil {
 		return nil
 	}
-	return NewWanTransaction(uint64(PRIVACY_TX), nonce, *to, amount, gasLimit.Uint64(), gasPrice, data)
+	return NewWanTransaction(uint64(WanPrivTxType), nonce, *to, amount, gasLimit.Uint64(), gasPrice, data)
 }
 
 const (
-	NORMAL_TX  = 1
-	PRIVACY_TX = 6
-	POS_TX     = 7
 	JUPITER_TX = 0xffffffff
 )
 
 func IsNormalTransaction(txType uint64) bool {
-	return txType == NORMAL_TX || txType == 0 || txType == 2 || txType == JUPITER_TX || txType == 0xff // some of old tx used , which is allowed.
+	return txType == WanLegacyTxType || txType == 0 || txType == 2   || txType == JUPITER_TX || txType == 0xff // some of old tx used , which is allowed.
 }
 func IsPosTransaction(txType uint64) bool {
-	return txType == POS_TX
+	return txType == WanPosTxType
 }
 func IsPrivacyTransaction(txType uint64) bool {
-	return txType == PRIVACY_TX
+	return txType == WanPrivTxType
 }
 
 //func IsValidTransactionType(txType uint64) bool {

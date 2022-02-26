@@ -381,8 +381,11 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	}
 	effectiveTip := st.gasPrice
 	if london {
+// 这里不对.lundon 要走pos流程
+		epochID, _ := util.GetEpochSlotIDFromDifficulty(st.evm.Context.Difficulty)
 		effectiveTip = cmath.BigMin(st.gasTipCap, new(big.Int).Sub(st.gasFeeCap, st.evm.Context.BaseFee))
-		st.state.AddBalance(st.evm.Context.Coinbase, new(big.Int).Mul(new(big.Int).SetUint64(usedGas), effectiveTip))
+		incentive.AddEpochGas(st.state, new(big.Int).Mul(new(big.Int).SetUint64(usedGas), effectiveTip), epochID)
+		//st.state.AddBalance(st.evm.Context.Coinbase, new(big.Int).Mul(new(big.Int).SetUint64(usedGas), effectiveTip))
 	} else {
 		if !params.IsPosActive() {
 			st.state.AddBalance(st.evm.Context.Coinbase, new(big.Int).Mul(new(big.Int).SetUint64(usedGas), st.gasPrice))
