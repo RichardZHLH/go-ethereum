@@ -199,7 +199,7 @@ var (
 
 		// add by Jacob
 		PosFirstBlock: big.NewInt(1), // set as n * epoch_length
-		IsPosActive:   true,
+		IsPosActive:   false,
 		Pluto: &PlutoConfig{
 			Period: 10,
 			Epoch:  100,

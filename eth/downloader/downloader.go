@@ -485,19 +485,11 @@ func (d *Downloader) syncWithPeer(p *peerConnection, hash common.Hash, td *big.I
 	}
 
 	// add by jacob begin
-	//onlyPow := 0
 	posFirst := d.blockchain.GetFirstPosBlockNumber()
 	if origin+1 < posFirst {
 		if height > posFirst {
-			height = posFirst - 1
-
-			//latest, td, err = d.fetchHeaderTd(p, height)
-			//if err != nil {
-			//	log.Debug("fetchHeaderTd error", "err", err)
-			//	return err
-			//}
+			height = posFirst - 1			
 		}
-		//	onlyPow = 1
 	}
 	// add by jacob end.
 
