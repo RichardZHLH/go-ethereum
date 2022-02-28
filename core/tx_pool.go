@@ -1379,7 +1379,7 @@ func (pool *TxPool) promoteExecutables(accounts []common.Address) []*types.Trans
 		log.Trace("Removed invalidPrivacy transactions", "count", len(invalidPrivacy))
 
 		// Remove all invalid pos transactions
-		invalidPos := list.InvalidPosRBTx(pool.currentState, pool.signer)
+		invalidPos, _ := list.InvalidPosRBTx(pool.currentState, pool.signer)
 		for _, tx := range invalidPos {
 			hash := tx.Hash()
 			log.Trace("Removed invalid pos transaction", "hash", hash)
@@ -1392,7 +1392,7 @@ func (pool *TxPool) promoteExecutables(accounts []common.Address) []*types.Trans
 		log.Trace("Removed invalidPos transactions", "count", len(invalidPos))
 
 		// Remove all invalid EL pos transactions
-		invalidPosEL := list.InvalidPosELTx(pool.currentState, pool.signer)
+		invalidPosEL, _ := list.InvalidPosELTx(pool.currentState, pool.signer)
 		for _, tx := range invalidPosEL {
 			hash := tx.Hash()
 			log.Trace("Removed invalid pos EL transaction", "hash", hash)
@@ -1589,8 +1589,6 @@ func (pool *TxPool) demoteUnexecutables() {
 		olds := list.Forward(nonce)
 		for _, tx := range olds {
 			hash := tx.Hash()
-
-			list.Remove(tx) // add by Jacob
 			pool.all.Remove(hash)
 			log.Trace("Removed old pending transaction", "hash", hash)
 			log.Trace("low nonce", "hash", hash, "tx.nonce", tx.Nonce(), "nonce", nonce, "to", tx.To())
@@ -1600,8 +1598,6 @@ func (pool *TxPool) demoteUnexecutables() {
 		for _, tx := range drops {
 			hash := tx.Hash()
 			log.Trace("Removed unpayable pending transaction", "hash", hash)
-
-			list.Remove(tx) // add by Jacob
 			pool.all.Remove(hash)
 		}
 		pendingNofundsMeter.Mark(int64(len(drops)))
@@ -1623,34 +1619,37 @@ func (pool *TxPool) demoteUnexecutables() {
 			//delete(pool.all, hash)
 			//pool.priced.Removed()
 			//pendingNofundsCounter.Inc(1)
-
-			list.Remove(tx) // add by Jacob
 			pool.all.Remove(hash)
 		}
 
 		// Remove all invalid pos transactions
-		invalidPos := list.InvalidPosRBTx(pool.currentState, pool.signer)
-		for _, tx := range invalidPos {
+		drops, invalidPos := list.InvalidPosRBTx(pool.currentState, pool.signer)
+		for _, tx := range drops {
 			hash := tx.Hash()
-			log.Trace("Removed invalid pos transaction", "hash", hash)
-			//delete(pool.all, hash)
-			//pool.priced.Removed()
-			//pendingNofundsCounter.Inc(1)
-
-			list.Remove(tx) // add by Jacob
+			log.Trace("Removed invalidPosRT pending transaction", "hash", hash)
 			pool.all.Remove(hash)
 		}
 
+		for _, tx := range invalidPos {
+			hash := tx.Hash()
+			log.Trace("Demoting pending transaction", "hash", hash)
+			// Internal shuffle shouldn't touch the lookup set.
+			pool.enqueueTx(hash, tx, false, false)
+		}
+
 		// Remove all invalid EL pos transactions
-		invalidPosEL := list.InvalidPosELTx(pool.currentState, pool.signer)
+		drops, invalidPosEL := list.InvalidPosELTx(pool.currentState, pool.signer)
+		for _, tx := range drops {
+			hash := tx.Hash()
+			log.Trace("Removed invalidPosEL pending transaction", "hash", hash)
+			pool.all.Remove(hash)
+		}
 		for _, tx := range invalidPosEL {
 			hash := tx.Hash()
-			log.Trace("Removed invalid pos EL transaction", "hash", hash)
-			//delete(pool.all, hash)
-			//pool.priced.Removed()
-			//pendingNofundsCounter.Inc(1)
-			list.Remove(tx) // add by Jacob
-			pool.all.Remove(hash)
+			log.Trace("Demoting pending transaction", "hash", hash)
+
+			// Internal shuffle shouldn't touch the lookup set.
+			pool.enqueueTx(hash, tx, false, false)
 		}
 		// add by Jacob end
 

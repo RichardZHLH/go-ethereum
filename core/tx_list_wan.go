@@ -60,7 +60,7 @@ func (l *txList) InvalidPrivacyTx(stateDB vm.StateDB, signer types.Signer, gasLi
 }
 
 // InvalidPosTx remove invalidate pos transactions
-func (l *txList) InvalidPosRBTx(stateDB vm.StateDB, signer types.Signer) types.Transactions {
+func (l *txList) InvalidPosRBTx(stateDB vm.StateDB, signer types.Signer) (types.Transactions, types.Transactions) {
 	removed := l.txs.Filter(func(tx *types.Transaction) bool {
 		if !types.IsPosTransaction(uint64(tx.Type())) || (*tx.To()) != vm.GetRBAddress() {
 			return false
@@ -86,14 +86,11 @@ func (l *txList) InvalidPosRBTx(stateDB vm.StateDB, signer types.Signer) types.T
 		invalids = l.txs.Filter(func(tx *types.Transaction) bool { return tx.Nonce() > lowest })
 	}
 
-	// Privacy transaction's sender is not real sender, just a hash info.
-	// So, no need to move invalid transactions to queue for later.
-	// Just remove all of invalid transactions.
-	return append(removed, invalids...)
+	return removed, invalids
 }
 
 // InvalidPosTx remove invalidate pos transactions
-func (l *txList) InvalidPosELTx(stateDB vm.StateDB, signer types.Signer) types.Transactions {
+func (l *txList) InvalidPosELTx(stateDB vm.StateDB, signer types.Signer) (types.Transactions, types.Transactions) {
 	removed := l.txs.Filter(func(tx *types.Transaction) bool {
 		if !types.IsPosTransaction(uint64(tx.Type())) || (*tx.To()) != vm.GetSlotLeaderSCAddress() {
 			return false
@@ -119,8 +116,5 @@ func (l *txList) InvalidPosELTx(stateDB vm.StateDB, signer types.Signer) types.T
 		invalids = l.txs.Filter(func(tx *types.Transaction) bool { return tx.Nonce() > lowest })
 	}
 
-	// Privacy transaction's sender is not real sender, just a hash info.
-	// So, no need to move invalid transactions to queue for later.
-	// Just remove all of invalid transactions.
-	return append(removed, invalids...)
+	return removed, invalids
 }
