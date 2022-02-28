@@ -397,7 +397,11 @@ func NewBlockChain(db ethdb.Database,
 	// the head block (ethash cache or clique voting snapshot). Might as well do
 	// it in advance.
 
-	//bc.engine.VerifyHeader(bc, bc.CurrentHeader(), true)
+	if bc.CurrentHeader().Number.Cmp(chainConfig.PosFirstBlock) < 0 {
+		bc.engine.VerifyHeader(bc, bc.CurrentHeader(), true)
+	} else {
+		bc.posEngine.VerifyHeader(bc, bc.CurrentHeader(), true)
+	}
 
 	// Check the current state of the block hashes and make sure that we do not have any of the bad blocks in our chain
 	for hash := range BadHashes {

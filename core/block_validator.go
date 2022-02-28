@@ -148,5 +148,11 @@ func CalcGasLimit(parent *types.Block, parentGasLimit, desiredLimit uint64) uint
 		}
 		return limit
 	}
+	if limit > desiredLimit {
+		limit = parentGasLimit - delta
+		if limit < desiredLimit {
+			limit = desiredLimit
+		}
+	}
 	return limit
 }
