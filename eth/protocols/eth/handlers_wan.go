@@ -18,6 +18,10 @@ package eth
 
 import (
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/p2p"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 // handleGetBlockHeaders handles Block header query, collect the requested headers and reply
@@ -31,6 +35,11 @@ func handleGetBlockHeaders(backend Backend, msg Decoder, peer *Peer) error {
 	return peer.SendBlockHeaders(response)
 }
 
+// SendBlockBodiesRLP sends a batch of block contents to the remote peer from
+// an already RLP encoded format.
+func (p *Peer) SendBlockBodiesRLP(bodies []rlp.RawValue) error {
+	return p2p.Send(p.rw, BlockBodiesMsg, bodies) // Not packed into BlockBodiesPacket to avoid RLP decoding
+}
 func handleGetBlockBodies(backend Backend, msg Decoder, peer *Peer) error {
 	// Decode the block body retrieval message
 	var query GetBlockBodiesPacket
@@ -41,6 +50,11 @@ func handleGetBlockBodies(backend Backend, msg Decoder, peer *Peer) error {
 	return peer.SendBlockBodiesRLP(response)
 }
 
+// SendNodeDataRLP sends a batch of arbitrary internal data, corresponding to the
+// hashes requested.
+func (p *Peer) SendNodeData(data [][]byte) error {
+	return p2p.Send(p.rw, NodeDataMsg, NodeDataPacket(data))
+}
 func handleGetNodeData(backend Backend, msg Decoder, peer *Peer) error {
 	// Decode the trie node data retrieval message
 	var query GetNodeDataPacket
@@ -49,6 +63,17 @@ func handleGetNodeData(backend Backend, msg Decoder, peer *Peer) error {
 	}
 	response := answerGetNodeDataQuery(backend, query, peer)
 	return peer.SendNodeData(response)
+}
+
+// SendReceiptsRLP sends a batch of transaction receipts, corresponding to the
+// ones requested from an already RLP encoded format.
+func (p *Peer) SendReceiptsRLP(receipts []rlp.RawValue) error {
+	return p2p.Send(p.rw, ReceiptsMsg, receipts) // Not packed into ReceiptsPacket to avoid RLP decoding
+}
+
+// SendBlockHeaders sends a batch of block headers to the remote peer.
+func (p *Peer) SendBlockHeaders(headers []*types.Header) error {
+	return p2p.Send(p.rw, BlockHeadersMsg, BlockHeadersPacket(headers))
 }
 func handleGetReceipts(backend Backend, msg Decoder, peer *Peer) error {
 	// Decode the block receipts retrieval message
@@ -93,6 +118,22 @@ func handleReceipts(backend Backend, msg Decoder, peer *Peer) error {
 		return fmt.Errorf("%w: message %v: %v", errDecode, msg, err)
 	}
 	return backend.Handle(peer, res)
+}
+
+// SendPooledTransactionsRLP sends requested transactions to the peer and adds the
+// hashes in its transaction hash set for future reference.
+//
+// Note, the method assumes the hashes are correct and correspond to the list of
+// transactions being sent.
+func (p *Peer) SendPooledTransactionsRLP(hashes []common.Hash, txs []rlp.RawValue) error {
+	// Mark all the transactions as known, but ensure we don't overflow our limits
+	//for p.knownTxs.Cardinality() > max(0, maxKnownTxs-len(hashes)) {
+	//	p.knownTxs.Pop()
+	//}
+	for _, hash := range hashes {
+		p.knownTxs.Add(hash)
+	}
+	return p2p.Send(p.rw, PooledTransactionsMsg, txs) // Not packed into PooledTransactionsPacket to avoid RLP decoding
 }
 func handleGetPooledTransactions(backend Backend, msg Decoder, peer *Peer) error {
 	// Decode the pooled transactions retrieval message
