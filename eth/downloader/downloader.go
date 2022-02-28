@@ -451,8 +451,8 @@ func (d *Downloader) syncWithPeer(p *peerConnection, hash common.Hash, td *big.I
 			d.mux.Post(DoneEvent{latest})
 		}
 	}()
-	if p.version < eth.ETH63 { // MERGETODO
-		return fmt.Errorf("%w: advertized %d < required %d", errTooOld, p.version, eth.ETH65)
+	if p.version < eth.ETH63 {
+		return fmt.Errorf("%w: advertized %d < required %d", errTooOld, p.version, eth.ETH66)
 	}
 	mode := d.getMode()
 
@@ -488,7 +488,7 @@ func (d *Downloader) syncWithPeer(p *peerConnection, hash common.Hash, td *big.I
 	posFirst := d.blockchain.GetFirstPosBlockNumber()
 	if origin+1 < posFirst {
 		if height > posFirst {
-			height = posFirst - 1			
+			height = posFirst - 1
 		}
 	}
 	// add by jacob end.

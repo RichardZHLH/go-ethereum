@@ -121,8 +121,11 @@ func applyTransaction(msg types.Message, config *params.ChainConfig, bc ChainCon
 
 	// Create a new receipt for the transaction, storing the intermediate root and gas used
 	// by the tx.
-	//receipt := &types.Receipt{Type: tx.Type(), PostState: root, CumulativeGasUsed: *usedGas}  // TODO why????
-	receipt := &types.Receipt{PostState: root, CumulativeGasUsed: *usedGas}
+	txtype := tx.Type()
+	if txtype != types.DynamicFeeTxType || !config.IsLondon(blockNumber) { // thers are  normal txs, txtype used 2
+		txtype = types.LegacyTxType
+	}
+	receipt := &types.Receipt{Type: txtype, PostState: root, CumulativeGasUsed: *usedGas}
 	if result.Failed() {
 		receipt.Status = types.ReceiptStatusFailed
 	} else {
