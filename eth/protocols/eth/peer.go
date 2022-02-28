@@ -108,7 +108,7 @@ func NewPeer(version uint, p *p2p.Peer, rw p2p.MsgReadWriter, txpool TxPool) *Pe
 	// Start up all the broadcasters
 	go peer.broadcastBlocks()
 	go peer.broadcastTransactions()
-	if version >= ETH65 {
+	if version >= ETH66 {
 		go peer.announceTransactions()
 	}
 	return peer
@@ -228,22 +228,6 @@ func (p *Peer) AsyncSendPooledTransactionHashes(hashes []common.Hash) {
 	}
 }
 
-// SendPooledTransactionsRLP sends requested transactions to the peer and adds the
-// hashes in its transaction hash set for future reference.
-//
-// Note, the method assumes the hashes are correct and correspond to the list of
-// transactions being sent.
-func (p *Peer) SendPooledTransactionsRLP(hashes []common.Hash, txs []rlp.RawValue) error {
-	// Mark all the transactions as known, but ensure we don't overflow our limits
-	//for p.knownTxs.Cardinality() > max(0, maxKnownTxs-len(hashes)) {
-	//	p.knownTxs.Pop()
-	//}
-	for _, hash := range hashes {
-		p.knownTxs.Add(hash)
-	}
-	return p2p.Send(p.rw, PooledTransactionsMsg, txs) // Not packed into PooledTransactionsPacket to avoid RLP decoding
-}
-
 // ReplyPooledTransactionsRLP is the eth/66 version of SendPooledTransactionsRLP.
 func (p *Peer) ReplyPooledTransactionsRLP(id uint64, hashes []common.Hash, txs []rlp.RawValue) error {
 	// Mark all the transactions as known, but ensure we don't overflow our limits
@@ -305,23 +289,12 @@ func (p *Peer) AsyncSendNewBlock(block *types.Block, td *big.Int) {
 	}
 }
 
-// SendBlockHeaders sends a batch of block headers to the remote peer.
-func (p *Peer) SendBlockHeaders(headers []*types.Header) error {
-	return p2p.Send(p.rw, BlockHeadersMsg, BlockHeadersPacket(headers))
-}
-
 // ReplyBlockHeaders is the eth/66 version of SendBlockHeaders.
 func (p *Peer) ReplyBlockHeaders(id uint64, headers []*types.Header) error {
 	return p2p.Send(p.rw, BlockHeadersMsg, BlockHeadersPacket66{
 		RequestId:          id,
 		BlockHeadersPacket: headers,
 	})
-}
-
-// SendBlockBodiesRLP sends a batch of block contents to the remote peer from
-// an already RLP encoded format.
-func (p *Peer) SendBlockBodiesRLP(bodies []rlp.RawValue) error {
-	return p2p.Send(p.rw, BlockBodiesMsg, bodies) // Not packed into BlockBodiesPacket to avoid RLP decoding
 }
 
 // ReplyBlockBodiesRLP is the eth/66 version of SendBlockBodiesRLP.
@@ -333,24 +306,12 @@ func (p *Peer) ReplyBlockBodiesRLP(id uint64, bodies []rlp.RawValue) error {
 	})
 }
 
-// SendNodeDataRLP sends a batch of arbitrary internal data, corresponding to the
-// hashes requested.
-func (p *Peer) SendNodeData(data [][]byte) error {
-	return p2p.Send(p.rw, NodeDataMsg, NodeDataPacket(data))
-}
-
 // ReplyNodeData is the eth/66 response to GetNodeData.
 func (p *Peer) ReplyNodeData(id uint64, data [][]byte) error {
 	return p2p.Send(p.rw, NodeDataMsg, NodeDataPacket66{
 		RequestId:      id,
 		NodeDataPacket: data,
 	})
-}
-
-// SendReceiptsRLP sends a batch of transaction receipts, corresponding to the
-// ones requested from an already RLP encoded format.
-func (p *Peer) SendReceiptsRLP(receipts []rlp.RawValue) error {
-	return p2p.Send(p.rw, ReceiptsMsg, receipts) // Not packed into ReceiptsPacket to avoid RLP decoding
 }
 
 // ReplyReceiptsRLP is the eth/66 response to GetReceipts.
@@ -392,12 +353,6 @@ func (p *Peer) RequestOneHeader(hash common.Hash) error {
 // specified header query, based on the hash of an origin block.
 func (p *Peer) RequestHeadersByHash(origin common.Hash, amount int, skip int, reverse bool) error {
 	p.Log().Debug("Fetching batch of headers", "count", amount, "fromhash", origin, "skip", skip, "reverse", reverse)
-	query := GetBlockHeadersPacket{
-		Origin:  HashOrNumber{Hash: origin},
-		Amount:  uint64(amount),
-		Skip:    uint64(skip),
-		Reverse: reverse,
-	}
 	if p.Version() >= ETH66 {
 		id := rand.Uint64()
 
@@ -412,6 +367,12 @@ func (p *Peer) RequestHeadersByHash(origin common.Hash, amount int, skip int, re
 			},
 		})
 	}
+	query := GetBlockHeadersPacket{
+		Origin:  HashOrNumber{Hash: origin},
+		Amount:  uint64(amount),
+		Skip:    uint64(skip),
+		Reverse: reverse,
+	}
 	return p2p.Send(p.rw, GetBlockHeadersMsg, &query)
 }
 
@@ -419,12 +380,6 @@ func (p *Peer) RequestHeadersByHash(origin common.Hash, amount int, skip int, re
 // specified header query, based on the number of an origin block.
 func (p *Peer) RequestHeadersByNumber(origin uint64, amount int, skip int, reverse bool) error {
 	p.Log().Debug("Fetching batch of headers", "count", amount, "fromnum", origin, "skip", skip, "reverse", reverse)
-	query := GetBlockHeadersPacket{
-		Origin:  HashOrNumber{Number: origin},
-		Amount:  uint64(amount),
-		Skip:    uint64(skip),
-		Reverse: reverse,
-	}
 	if p.Version() >= ETH66 {
 		id := rand.Uint64()
 
@@ -439,19 +394,13 @@ func (p *Peer) RequestHeadersByNumber(origin uint64, amount int, skip int, rever
 			},
 		})
 	}
-	return p2p.Send(p.rw, GetBlockHeadersMsg, &query)
-}
-
-// ExpectRequestHeadersByNumber is a testing method to mirror the recipient side
-// of the RequestHeadersByNumber operation.
-func (p *Peer) ExpectRequestHeadersByNumber(origin uint64, amount int, skip int, reverse bool) error {
-	req := &GetBlockHeadersPacket{
+	query := GetBlockHeadersPacket{
 		Origin:  HashOrNumber{Number: origin},
 		Amount:  uint64(amount),
 		Skip:    uint64(skip),
 		Reverse: reverse,
 	}
-	return p2p.ExpectMsg(p.rw, GetBlockHeadersMsg, req)
+	return p2p.Send(p.rw, GetBlockHeadersMsg, &query)
 }
 
 // RequestBodies fetches a batch of blocks' bodies corresponding to the hashes
