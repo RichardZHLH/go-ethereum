@@ -72,6 +72,7 @@ type Miner struct {
 	startCh  chan common.Address
 	stopCh   chan struct{}
 
+	wg sync.WaitGroup
 	mu sync.Mutex
 }
 
@@ -85,10 +86,9 @@ func New(eth Backend, config *Config, chainConfig *params.ChainConfig, mux *even
 		stopCh:  make(chan struct{}),
 		worker:  newWorker(config, chainConfig, engine, eth, mux, isLocalBlock, true),
 	}
-
+	miner.wg.Add(1)
 	eth.BlockChain().RegisterSwitchEngine(miner)
 	posPreInit(eth)
-
 	go miner.update()
 	return miner
 }
@@ -98,7 +98,7 @@ func New(eth Backend, config *Config, chainConfig *params.ChainConfig, mux *even
 // the loop is exited. This to prevent a major security vuln where external parties can DOS you with blocks
 // and halt your mining operation for as long as the DOS continues.
 func (miner *Miner) update() {
-	//defer miner.wg.Done()
+	defer miner.wg.Done()
 
 	events := miner.mux.Subscribe(downloader.StartEvent{}, downloader.DoneEvent{}, downloader.FailedEvent{})
 	defer func() {
@@ -152,7 +152,6 @@ func (miner *Miner) update() {
 			miner.SetEtherbase(addr)
 			if canStart {
 				miner.worker.start()
-				//miner.Start(miner.coinbase) // add by Jacob
 			}
 			shouldStart = true
 		case <-miner.stopCh:
@@ -190,7 +189,7 @@ func (miner *Miner) Stop() {
 
 func (miner *Miner) Close() {
 	close(miner.exitCh)
-	//miner.wg.Wait()
+	miner.wg.Wait()
 }
 
 func (miner *Miner) Mining() bool {

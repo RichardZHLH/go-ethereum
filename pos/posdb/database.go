@@ -257,6 +257,7 @@ func (s *Db) getUniqueKeyBytes(epochID uint64, index uint64, key string) []byte 
 	return []byte(s.getUniqueKey(epochID, index, key))
 }
 
+// TODO duplicated with epochLeader
 type Proposer struct {
 	PubSec256     []byte
 	PubBn256      []byte

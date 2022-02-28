@@ -41,7 +41,7 @@ const (
 
 	AvgRetDB      = "avgretdb"
 	ApolloEpochID = 18104
-	AugustEpochID = 18116
+	AugustEpochID = 18116 //TODO change it as mainnet 8.8
 
 	TestnetAdditionalBlock = 6661460
 )
@@ -182,7 +182,7 @@ var DefaultConfig = Config{
 	0,
 	0,
 	0,
-	big.NewInt(int64(params.GWei)), // add by Jacob
+	nil,
 
 	0,
 }
