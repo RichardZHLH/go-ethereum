@@ -40,23 +40,23 @@ import (
 
 const (
 	// resultQueueSize is the size of channel listening to sealing result.
-	//resultQueueSize = 10
+	resultQueueSize = 10
 
 	// txChanSize is the size of channel listening to NewTxsEvent.
 	// The number is referenced from the size of tx pool.
-	//txChanSize = 4096
+	txChanSize = 4096
 
 	// chainHeadChanSize is the size of channel listening to ChainHeadEvent.
-	//chainHeadChanSize = 10
+	chainHeadChanSize = 10
 
 	// chainSideChanSize is the size of channel listening to ChainSideEvent.
-	//chainSideChanSize = 10
+	chainSideChanSize = 10
 
 	// resubmitAdjustChanSize is the size of resubmitting interval adjustment channel.
 	resubmitAdjustChanSize = 10
 
 	// miningLogAtDepth is the number of confirmations before logging successful mining.
-	//miningLogAtDepth = 7
+	miningLogAtDepth = 7
 
 	// minRecommitInterval is the minimal time interval to recreate the mining block with
 	// any newly arrived transactions.
@@ -76,20 +76,8 @@ const (
 
 	// staleThreshold is the maximum depth of the acceptable stale block.
 	staleThreshold = 7
-)
 
-const (
-	resultQueueSize  = 1
-	miningLogAtDepth = 5
-
-	// txChanSize is the size of channel listening to TxPreEvent.
-	// The number is referenced from the size of tx pool.
-	txChanSize = 4096
-	// chainHeadChanSize is the size of channel listening to ChainHeadEvent.
-	chainHeadChanSize  = 10
 	chainTimerSlotSize = 3
-	// chainSideChanSize is the size of channel listening to ChainSideEvent.
-	chainSideChanSize = 10
 )
 
 // environment is the worker's current environment and holds all of the current state information.
@@ -672,9 +660,9 @@ func (w *worker) resultLoop() {
 			)
 			for i, receipt := range task.receipts {
 				// add block location fields
-				//receipt.BlockHash = hash
-				//receipt.BlockNumber = block.Number()
-				//receipt.TransactionIndex = uint(i)
+				receipt.BlockHash = hash
+				receipt.BlockNumber = block.Number()
+				receipt.TransactionIndex = uint(i)
 
 				receipts[i] = new(types.Receipt)
 				*receipts[i] = *receipt
@@ -872,9 +860,6 @@ func (w *worker) commitTransactions(txs *types.TransactionsByPriceAndNonce, coin
 		w.current.state.Prepare(tx.Hash(), w.current.tcount)
 
 		logs, err := w.commitTransaction(tx, coinbase)
-		if err != nil {
-			fmt.Printf("***************************w.commitTransaction error, %v\n", err.Error())
-		}
 		switch {
 		case errors.Is(err, core.ErrGasLimitReached):
 			// Pop the current out-of-gas transaction without shifting in the next from the account
@@ -1049,14 +1034,14 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 	if len(localTxs) > 0 {
 		txs := types.NewTransactionsByPriceAndNonce(w.current.signer, localTxs, header.BaseFee)
 		if w.commitTransactions(txs, w.coinbase, interrupt) {
-			log.Info("Jacob commitTransactions return localTxs")
+			log.Debug("commitTransactions return localTxs")
 			return
 		}
 	}
 	if len(remoteTxs) > 0 {
 		txs := types.NewTransactionsByPriceAndNonce(w.current.signer, remoteTxs, header.BaseFee)
 		if w.commitTransactions(txs, w.coinbase, interrupt) {
-			log.Info("Jacob commitTransactions return remotTxs")
+			log.Debug("commitTransactions return remotTxs")
 			return
 		}
 	}
@@ -1070,7 +1055,7 @@ func (w *worker) commit(uncles []*types.Header, interval func(), update bool, st
 	receipts := copyReceipts(w.current.receipts)
 	s := w.current.state.Copy()
 
-	log.Info("Jacob worker commit", "len(w.current.txs)", len(w.current.txs), "update", update)
+	log.Info("worker commit", "len(w.current.txs)", len(w.current.txs), "update", update)
 
 	block, err := w.engine.FinalizeAndAssemble(w.chain, w.current.header, s, w.current.txs, uncles, receipts)
 	if err != nil {
