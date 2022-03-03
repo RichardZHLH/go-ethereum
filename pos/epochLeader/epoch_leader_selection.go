@@ -601,9 +601,6 @@ func (e *Epocher) GetProposerBn256PK(epochID uint64, idx uint64, addr common.Add
 // TODO Is this  right?
 func CalEpochProbabilityStaker(staker *vm.StakerInfo, epochID uint64) (infors []vm.ClientProbability, totalProbability *big.Int, err error) {
 	if staker.StakingEpoch == 0 && staker.LockEpochs != 0 {
-		if posconfig.FirstEpochId == 0 {
-			panic("posconfig.FirstEpochId == 0")
-		}
 		staker.StakingEpoch = posconfig.FirstEpochId + 2
 		for j := 0; j < len(staker.Partners); j++ {
 			staker.Partners[j].StakingEpoch = posconfig.FirstEpochId + 2
@@ -688,10 +685,7 @@ func (e *Epocher) GetEpochProbability(epochId uint64, addr common.Address) (*vm.
 
 	// try to get current feeRate
 	feeRate := staker.FeeRate
-	curBlock := e.blkChain.CurrentBlock().Number().Uint64() - 1
-	targetRoot := e.blkChain.GetHeaderByNumber(curBlock).Root
-	curStateDb, err := e.blkChain.StateAt(targetRoot)
-	//curStateDb, err := e.blkChain.StateAt(e.blkChain.CurrentBlock().Root())
+	curStateDb, err := e.blkChain.StateAt(e.blkChain.CurrentBlock().Root())
 	if err != nil {
 		return nil, err
 	} else {
@@ -739,11 +733,8 @@ func saveStakeOut(stakeOutInfo []RefundInfo, epochID uint64) error {
 	return nil
 }
 func coreTransfer(db vm.StateDB, sender, recipient common.Address, amount *big.Int) {
-	log.Debug("coreTransfer", "sender", sender.String(), "recipient", recipient.String(), "amount", amount.String())
 	if core.CanTransfer(db, sender, amount) {
 		core.Transfer(db, sender, recipient, amount)
-	} else {
-		panic("coreTransfer")
 	}
 }
 
