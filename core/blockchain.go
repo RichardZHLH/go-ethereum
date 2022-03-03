@@ -1491,6 +1491,14 @@ func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.
 		bc.Config().SetPosActive()
 	}
 
+	// add by Jacob begin
+	if bc.Config().IsLondon(block.Number()) {
+		if !params.IsLondonActive() {
+			params.SetLondonActive(true)
+		}
+	}
+	// add by Jacob end
+
 	if bc.isCurrentLastPPowBlock() {
 		bc.CurrentEpochId = -1
 		log.Info("ppow2pos", "", "will switch engine......")

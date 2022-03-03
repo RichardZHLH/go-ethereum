@@ -298,6 +298,15 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		miner.PosInit(eth)
 		chainConfig.SetPosActive()
 	}
+
+	// add by Jacob begin
+	if chainConfig.IsLondon(big.NewInt(0).SetUint64(core.PeekChainHeight(chainDb))) {
+		if !params.IsLondonActive() {
+			params.SetLondonActive(true)
+		}
+	}
+	// add by Jacob end
+
 	return eth, nil
 }
 
@@ -599,5 +608,3 @@ func (s *Ethereum) SwitchEngine(engine consensus.Engine) {
 
 	miner.PosInit(s)
 }
-
-
