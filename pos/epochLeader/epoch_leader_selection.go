@@ -225,13 +225,11 @@ func (e *Epocher) selectLeaders(r []byte, statedb *state.StateDB, epochId uint64
 	err = e.epochLeaderSelection(r, pa, epochId)
 	if err != nil {
 		e.reportSelectELFailed(epochId)
-		//return err
 	}
 
 	err = e.randomProposerSelection(r, pa, epochId)
 	if err != nil {
 		e.reportSelectRBPFailed(epochId)
-		//return err
 	}
 
 	return nil
@@ -458,6 +456,8 @@ func (e *Epocher) IsGenerateRBPSuc(epochID uint64) bool {
 
 //get epochLeaders of epochID in localdb
 func (e *Epocher) GetEpochLeaders(epochID uint64) [][]byte {
+
+	// TODO: how to cache these
 	epArray := posdb.GetEpochLeaderGroup(epochID)
 	wa, err := e.GetWhiteArrayByEpochId(epochID)
 	if err == nil {
@@ -469,6 +469,7 @@ func (e *Epocher) GetEpochLeaders(epochID uint64) [][]byte {
 
 }
 func (e *Epocher) GetRBProposer(epochID uint64) [][]byte {
+	// TODO: how to cache these
 	rbArray := posdb.GetRBProposerGroup(epochID)
 	return rbArray
 
@@ -597,6 +598,7 @@ func (e *Epocher) GetProposerBn256PK(epochID uint64, idx uint64, addr common.Add
 	}
 }
 
+// TODO Is this  right?
 func CalEpochProbabilityStaker(staker *vm.StakerInfo, epochID uint64) (infors []vm.ClientProbability, totalProbability *big.Int, err error) {
 	if staker.StakingEpoch == 0 && staker.LockEpochs != 0 {
 		if posconfig.FirstEpochId == 0 {
@@ -737,8 +739,8 @@ func saveStakeOut(stakeOutInfo []RefundInfo, epochID uint64) error {
 	return nil
 }
 func coreTransfer(db vm.StateDB, sender, recipient common.Address, amount *big.Int) {
+	log.Debug("coreTransfer", "sender", sender.String(), "recipient", recipient.String(), "amount", amount.String())
 	if core.CanTransfer(db, sender, amount) {
-		log.Debug("coreTransfer", "sender", sender.String(), "recipient", recipient.String(), "amount", amount.String())
 		core.Transfer(db, sender, recipient, amount)
 	} else {
 		panic("coreTransfer")

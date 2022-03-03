@@ -201,9 +201,9 @@ func (s *SLS) getSlotLeaderProofByGenesis(PrivateKey *ecdsa.PrivateKey, epochID 
 			return s.getSlotLeaderProofByGenesis(PrivateKey, epRecovery, slotID)
 		}
 		// preEpochLeader not exist and build SMA error.
-		if isDefault && isGenesis {
-			goto genesisDeault
-		}
+		//if isDefault && isGenesis {
+		//	goto genesisDeault
+		//}
 		// preEpochLeader not exist but SMA be generated successfully
 		if isDefault && !isGenesis {
 			log.Error("getSlotLeaderProof Mars should never come here")
@@ -212,7 +212,7 @@ func (s *SLS) getSlotLeaderProofByGenesis(PrivateKey *ecdsa.PrivateKey, epochID 
 		// add by Jacob end
 	}
 
-genesisDeault:
+	//genesisDeault:
 
 	epochID = 0
 
@@ -248,21 +248,15 @@ func (s *SLS) getSlotLeaderProof(PrivateKey *ecdsa.PrivateKey, epochID uint64,
 	rbPtr, _ = s.getRandom(nil, epochID)
 	rbBytes := rbPtr.Bytes()
 
-	//log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID)
-	//log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID, "slotLeaderRb", hex.EncodeToString(rbBytes))
-
 	epochLeadersHexStr := make([]string, 0)
 	for _, value := range epochLeadersPtrPre {
 		epochLeadersHexStr = append(epochLeadersHexStr, hex.EncodeToString(crypto.FromECDSAPub(value)[:4]))
 	}
-	//log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID, "epochLeadersHexStr", epochLeadersHexStr)
 
 	smaPiecesHexStr := make([]string, 0)
 	for _, value := range smaPiecesPtr {
 		smaPiecesHexStr = append(smaPiecesHexStr, hex.EncodeToString(crypto.FromECDSAPub(value)[:4]))
 	}
-
-	//log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID, "smaPiecesHexStr", smaPiecesHexStr)
 
 	log.Debug("getSlotLeaderProof", "epochID", epochID, "slotID", slotID,
 		"slotLeaderRb", hex.EncodeToString(rbBytes),
