@@ -75,7 +75,8 @@ func (c *PlutoConfig) String() string {
 
 var (
 	// MainnetChainConfig is the chain parameters to run a node on the main network.
-	MainnetChainConfig = &ChainConfig{
+	MainneLondonBlockNumber int64 = 21000000
+	MainnetChainConfig            = &ChainConfig{
 		ChainID:             big.NewInt(MAINNET_CHAIN_ID),
 		HomesteadBlock:      big.NewInt(0),
 		DAOForkBlock:        big.NewInt(0),
@@ -85,11 +86,12 @@ var (
 		EIP155Block:         big.NewInt(0),
 		EIP158Block:         big.NewInt(0),
 		ByzantiumBlock:      big.NewInt(0),
-		ConstantinopleBlock: big.NewInt(999_000_000_000),
-		PetersburgBlock:     big.NewInt(999_000_000_000),
-		IstanbulBlock:       big.NewInt(999_000_000_000),
-		MuirGlacierBlock:    big.NewInt(999_000_000_000),
-		BerlinBlock:         big.NewInt(999_000_000_000),
+		ConstantinopleBlock: big.NewInt(MainneLondonBlockNumber),
+		PetersburgBlock:     big.NewInt(MainneLondonBlockNumber),
+		IstanbulBlock:       big.NewInt(MainneLondonBlockNumber),
+		MuirGlacierBlock:    big.NewInt(MainneLondonBlockNumber),
+		BerlinBlock:         big.NewInt(MainneLondonBlockNumber),
+		LondonBlock:         big.NewInt(MainneLondonBlockNumber),
 		Ethash:              new(EthashConfig),
 
 		// add by Jacob
@@ -101,33 +103,8 @@ var (
 		},
 	}
 
-	WanchainChainConfig = &ChainConfig{
-		ChainID:             big.NewInt(MAINNET_CHAIN_ID),
-		HomesteadBlock:      big.NewInt(0),
-		DAOForkBlock:        big.NewInt(0),
-		DAOForkSupport:      false,
-		EIP150Block:         big.NewInt(0),
-		EIP150Hash:          common.HexToHash("0x2086799aeebeae135c246c65021c82b4e15a2c451340993aacfd2751886514f0"),
-		EIP155Block:         big.NewInt(0),
-		EIP158Block:         big.NewInt(0),
-		ByzantiumBlock:      big.NewInt(0),
-		ConstantinopleBlock: big.NewInt(999_000_000_000),
-		PetersburgBlock:     big.NewInt(999_000_000_000),
-		IstanbulBlock:       big.NewInt(999_000_000_000),
-		MuirGlacierBlock:    big.NewInt(999_000_000_000),
-		BerlinBlock:         big.NewInt(999_000_000_000),
-		Ethash:              new(EthashConfig),
-
-		// add by Jacob
-		PosFirstBlock: big.NewInt(MainnetPow2PosUpgradeBlockNumber), // set as n * epoch_length
-		IsPosActive:   false,
-		Pluto: &PlutoConfig{
-			Period: 10,
-			Epoch:  100,
-		},
-	}
-
-	TestnetChainConfig = &ChainConfig{
+	TestnetLondonBlockNumber int64 = 22000000
+	TestnetChainConfig             = &ChainConfig{
 		ChainID:             big.NewInt(TESTNET_CHAIN_ID),
 		HomesteadBlock:      big.NewInt(0),
 		DAOForkBlock:        big.NewInt(0),
@@ -137,12 +114,13 @@ var (
 		EIP155Block:         big.NewInt(0),
 		EIP158Block:         big.NewInt(0),
 		ByzantiumBlock:      big.NewInt(0),
-		ConstantinopleBlock: big.NewInt(999_000_000_000),
-		PetersburgBlock:     big.NewInt(999_000_000_000),
-		IstanbulBlock:       big.NewInt(999_000_000_000),
-		MuirGlacierBlock:    big.NewInt(999_000_000_000),
-		BerlinBlock:         big.NewInt(999_000_000_000),
-		Ethash:              new(EthashConfig),
+		ConstantinopleBlock: big.NewInt(TestnetLondonBlockNumber),
+		PetersburgBlock:     big.NewInt(TestnetLondonBlockNumber),
+		IstanbulBlock:       big.NewInt(TestnetLondonBlockNumber),
+		MuirGlacierBlock:    big.NewInt(TestnetLondonBlockNumber),
+		BerlinBlock:         big.NewInt(TestnetLondonBlockNumber),
+		//LondonBlock:         big.NewInt(TestnetLondonBlockNumber),
+		Ethash: new(EthashConfig),
 
 		// add by Jacob
 		PosFirstBlock: big.NewInt(TestnetPow2PosUpgradeBlockNumber), // set as n * epoch_length
@@ -153,7 +131,8 @@ var (
 		},
 	}
 
-	InternalChainConfig = &ChainConfig{
+	InternalLondonBlockNumber int64 = 22000000
+	InternalChainConfig             = &ChainConfig{
 		ChainID:             big.NewInt(INTERNAL_CHAIN_ID),
 		HomesteadBlock:      big.NewInt(0),
 		DAOForkBlock:        big.NewInt(0),
@@ -163,11 +142,12 @@ var (
 		EIP155Block:         big.NewInt(0),
 		EIP158Block:         big.NewInt(0),
 		ByzantiumBlock:      big.NewInt(0),
-		ConstantinopleBlock: big.NewInt(999_000_000_000),
-		PetersburgBlock:     big.NewInt(999_000_000_000),
-		IstanbulBlock:       big.NewInt(999_000_000_000),
-		MuirGlacierBlock:    big.NewInt(999_000_000_000),
-		BerlinBlock:         big.NewInt(999_000_000_000),
+		ConstantinopleBlock: big.NewInt(InternalLondonBlockNumber),
+		PetersburgBlock:     big.NewInt(InternalLondonBlockNumber),
+		IstanbulBlock:       big.NewInt(InternalLondonBlockNumber),
+		MuirGlacierBlock:    big.NewInt(InternalLondonBlockNumber),
+		BerlinBlock:         big.NewInt(InternalLondonBlockNumber),
+		LondonBlock:         big.NewInt(InternalLondonBlockNumber),
 		Ethash:              new(EthashConfig),
 
 		// add by Jacob
@@ -179,7 +159,8 @@ var (
 		},
 	}
 
-	PlutoChainConfig = &ChainConfig{
+	PlutoLondonBlockNumber int64 = 10000
+	PlutoChainConfig             = &ChainConfig{
 		ChainID:             big.NewInt(PLUTO_CHAIN_ID),
 		HomesteadBlock:      big.NewInt(0),
 		DAOForkBlock:        big.NewInt(0),
@@ -189,12 +170,12 @@ var (
 		EIP155Block:         big.NewInt(0),
 		EIP158Block:         big.NewInt(0),
 		ByzantiumBlock:      big.NewInt(0),
-		ConstantinopleBlock: big.NewInt(0),
-		PetersburgBlock:     big.NewInt(0),
-		IstanbulBlock:       big.NewInt(0),
-		MuirGlacierBlock:    big.NewInt(0),
-		BerlinBlock:         big.NewInt(0),
-		LondonBlock:         big.NewInt(0),
+		ConstantinopleBlock: big.NewInt(PlutoLondonBlockNumber),
+		PetersburgBlock:     big.NewInt(PlutoLondonBlockNumber),
+		IstanbulBlock:       big.NewInt(PlutoLondonBlockNumber),
+		MuirGlacierBlock:    big.NewInt(PlutoLondonBlockNumber),
+		BerlinBlock:         big.NewInt(PlutoLondonBlockNumber),
+		LondonBlock:         big.NewInt(PlutoLondonBlockNumber),
 		Ethash:              new(EthashConfig),
 
 		// add by Jacob
@@ -205,69 +186,6 @@ var (
 			Epoch:  100,
 		},
 	}
-	/*
-		// RinkebyChainConfig contains the chain parameters to run a node on the Rinkeby test network.
-		InternalChainConfig = &ChainConfig{
-			ChainID: big.NewInt(4),
-			//HomesteadBlock: big.NewInt(1),
-			//DAOForkBlock:   nil,
-			//DAOForkSupport: true,
-			//EIP150Block:    big.NewInt(2),
-			//EIP150Hash:     common.HexToHash("0x9b095b36c15eaf13044373aef8ee0bd3a382a5abb92e402afa44b8249c3a90e9"),
-			//EIP155Block:    big.NewInt(3),
-			//EIP158Block:    big.NewInt(3),
-			ByzantiumBlock: big.NewInt(0),
-
-			Ethash: new(EthashConfig),
-		}
-		// PlutoChainConfig contains the chain parameters to run a node on the Pluto test network.
-		PlutoChainConfig = &ChainConfig{
-			ChainID: big.NewInt(6),
-			//HomesteadBlock: big.NewInt(0),
-			//DAOForkBlock:   nil,
-			//DAOForkSupport: true,
-			//EIP150Block:    big.NewInt(0),
-			//EIP150Hash:     common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
-			//EIP155Block:    big.NewInt(3),
-			//EIP158Block:    big.NewInt(3),
-			ByzantiumBlock: big.NewInt(0),
-
-			Pluto: &PlutoConfig{
-				Period: 6,
-				Epoch:  6000,
-			},
-		}
-	*/
-
-	// AllProtocolChanges contains every protocol change (EIPs)
-	// introduced and accepted by the Ethereum core developers.
-	//
-	// This configuration is intentionally not using keyed fields.
-	// This configuration must *always* have all forks enabled, which
-	// means that all fields must be set at all times. This forces
-	// anyone adding flags to the config to also have to set these
-	// fields.
-	//AllProtocolChanges = &ChainConfig{big.NewInt(1337), big.NewInt(0), big.NewInt(100), false, new(EthashConfig), nil, nil}
-	//
-	//TestChainConfig = &ChainConfig{
-	//	ChainId:        big.NewInt(MAINNET_CHAIN_ID),
-	//	ByzantiumBlock: big.NewInt(0),
-	//	Ethash:         new(EthashConfig),
-	//	PosFirstBlock:  big.NewInt(TestnetPow2PosUpgradeBlockNumber), // set as n * epoch_length
-	//	IsPosActive:    false,
-	//}
-	//
-	//TestRules = TestChainConfig.Rules(new(big.Int))
-
-	// add by Jacob
-	//	PosFirstBlock: big.NewInt(1), // set as n * epoch_length
-	//	IsPosActive:   true,
-	//	Pluto: &PlutoConfig{
-	//		Period: 10,
-	//		Epoch:  100,
-	//	},
-	//}
-
 	noStaking = false
 )
 
