@@ -119,8 +119,8 @@ var (
 		IstanbulBlock:       big.NewInt(TestnetLondonBlockNumber),
 		MuirGlacierBlock:    big.NewInt(TestnetLondonBlockNumber),
 		BerlinBlock:         big.NewInt(TestnetLondonBlockNumber),
-		//LondonBlock:         big.NewInt(TestnetLondonBlockNumber),
-		Ethash: new(EthashConfig),
+		LondonBlock:         big.NewInt(TestnetLondonBlockNumber),
+		Ethash:              new(EthashConfig),
 
 		// add by Jacob
 		PosFirstBlock: big.NewInt(TestnetPow2PosUpgradeBlockNumber), // set as n * epoch_length
