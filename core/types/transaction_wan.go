@@ -6,13 +6,13 @@ import (
 )
 
 // deriveSigner makes a *best* guess about which signer to use.
-func deriveSigner(V *big.Int) Signer {
-	if V.Sign() != 0 && isProtectedV(V) {
-		return NewEIP155Signer(deriveChainId(V))
-	} else {
-		return HomesteadSigner{}
-	}
-}
+//func deriveSigner(V *big.Int) Signer {
+//	if V.Sign() != 0 && isProtectedV(V) {
+//		return NewEIP155Signer(deriveChainId(V))
+//	} else {
+//		return HomesteadSigner{}
+//	}
+//}
 
 ////////////////////////////////////for privacy tx ///////////////////////
 func NewOTATransaction(nonce uint64, to common.Address, amount, gasLimit, gasPrice *big.Int, data []byte) *Transaction {
@@ -31,7 +31,7 @@ const (
 )
 
 func IsNormalTransaction(txType uint64) bool {
-	return txType == WanLegacyTxType || txType == 0 || txType == 2   || txType == JUPITER_TX || txType == 0xff // some of old tx used , which is allowed.
+	return txType == WanLegacyTxType || txType == 0 || txType == 2 || txType == JUPITER_TX || txType == 0xff // some of old tx used , which is allowed.
 }
 func IsPosTransaction(txType uint64) bool {
 	return txType == WanPosTxType

@@ -409,9 +409,23 @@ func (tx *Transaction) Size() common.StorageSize {
 }
 
 func (tx *Transaction) IsValidType() bool {
-	if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == DynamicFeeTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
-		return true
+	// TODO check how many types we need.
+	if !params.IsLondonActive() {
+		if !params.IsPosActive() {
+			if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanTestnetTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
+				return true
+			}
+		} else {
+			if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
+				return true
+			}
+		}
+	} else {
+		if tx.Type() == LegacyTxType || tx.Type() == WanLegacyTxType || tx.Type() == DynamicFeeTxType || tx.Type() == WanPosTxType || tx.Type() == WanPrivTxType || tx.Type() == WanJupiterTxType {
+			return true
+		}
 	}
+
 	return false
 }
 func (tx *Transaction) IsLegacyType() bool {
