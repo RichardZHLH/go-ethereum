@@ -525,7 +525,7 @@ func (w *worker) mainLoop() {
 			log.Debug("worker:mainloop", "len(ev.Txs)", len(ev.Txs))
 			// Add by Jacob end
 
-			// cancel by hjacob end
+			// cancel by jacob end
 			/*
 				if !w.isRunning() && w.current != nil {
 					// If block is already full, abort
@@ -599,7 +599,7 @@ func (w *worker) taskLoop() {
 			// Reject duplicate sealing work due to resubmitting.
 			sealHash := w.engine.SealHash(task.block.Header())
 			if sealHash == prev {
-				//continue    // cancel by Jacob
+				continue
 			}
 			// Interrupt previous sealing operation
 			interrupt()
@@ -608,17 +608,13 @@ func (w *worker) taskLoop() {
 			if w.skipSealHook != nil && w.skipSealHook(task) {
 				continue
 			}
-
-			if err := w.engine.Seal(w.chain, task.block, w.resultCh, stopCh); err != nil {
-				log.Warn("Block sealing failed", "err", err)
-				continue
-			}
-			sealHash = w.engine.SealHash(task.block.Header())
-			log.Warn("xxxxxxxxxxxxxxxxxxxxxxxxxxxx block task insert", "sealHash", sealHash.String())
-
 			w.pendingMu.Lock()
 			w.pendingTasks[sealHash] = task
 			w.pendingMu.Unlock()
+
+			if err := w.engine.Seal(w.chain, task.block, w.resultCh, stopCh); err != nil {
+				log.Warn("Block sealing failed", "err", err)
+			}
 		case <-w.exitCh:
 			interrupt()
 			return
@@ -648,7 +644,6 @@ func (w *worker) resultLoop() {
 			w.pendingMu.RLock()
 			task, exist := w.pendingTasks[sealhash]
 			w.pendingMu.RUnlock()
-			log.Warn("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxblock task get", "sealHash", sealhash.String())
 			if !exist {
 				log.Error("Block found but no relative pending task", "number", block.Number(), "sealhash", sealhash, "hash", hash)
 				continue
@@ -1008,11 +1003,9 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 
 	// Create an empty block based on temporary copied state for
 	// sealing in advance without waiting block execution finished.
-
-	w.disablePreseal() // add by jacob
-	if !noempty && atomic.LoadUint32(&w.noempty) == 0 {
-		w.commit(uncles, nil, false, tstart)
-	}
+	//if !noempty && atomic.LoadUint32(&w.noempty) == 0 {
+	//	w.commit(uncles, nil, false, tstart)
+	//}
 
 	// Fill the block with all available pending transactions.
 	pending := w.eth.TxPool().Pending(true)
@@ -1054,9 +1047,6 @@ func (w *worker) commit(uncles []*types.Header, interval func(), update bool, st
 	// Deep copy receipts here to avoid interaction between different tasks.
 	receipts := copyReceipts(w.current.receipts)
 	s := w.current.state.Copy()
-
-	log.Info("worker commit", "len(w.current.txs)", len(w.current.txs), "update", update)
-
 	block, err := w.engine.FinalizeAndAssemble(w.chain, w.current.header, s, w.current.txs, uncles, receipts)
 	if err != nil {
 		return err

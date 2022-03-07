@@ -1,6 +1,7 @@
 package posdb
 
 import (
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -32,9 +33,9 @@ var (
 )
 
 const (
-	GWAN_DB_NAMESPACE="GWAN_DB_NAMESPACE"
+	GWAN_DB_NAMESPACE = "GWAN_DB_NAMESPACE"
+	POS_DB_ERROR      = "pos db error"
 )
-
 
 func NewDb(fileName string) *Db {
 	mu.Lock()
@@ -115,7 +116,7 @@ func (s *Db) DbInit(dbPath string) {
 		inst.DbClose()
 	}
 
-	s.db, err = leveldb.New(dirname, 0, 256,GWAN_DB_NAMESPACE,false)
+	s.db, err = leveldb.New(dirname, 0, 256, GWAN_DB_NAMESPACE, false)
 	if err != nil {
 		panic("failed to create wanpos_tmpdb database: " + dbPath + "_" + err.Error())
 	}
@@ -126,7 +127,8 @@ func (s *Db) put(epochID uint64, index uint64, key string, value []byte, saveKey
 
 	has, err := s.db.Has(newKey)
 	if err != nil {
-		return nil, err
+		panic(fmt.Sprintf("%s:%s", POS_DB_ERROR, err.Error()))
+		//return nil, err
 	}
 
 	if has {
@@ -137,6 +139,11 @@ func (s *Db) put(epochID uint64, index uint64, key string, value []byte, saveKey
 	if saveKey {
 		err = s.saveKey(newKey, epochID)
 	}
+	// add by Jacob begin
+	if err != nil {
+		panic(fmt.Sprintf("%s:%s", POS_DB_ERROR, err.Error()))
+	}
+	// add by Jacob end
 	return newKey, err
 }
 
