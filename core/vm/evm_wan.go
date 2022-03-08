@@ -21,6 +21,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 )
+
 // add by jacob
 func (evm *EVM) Time() *big.Int {
 	return evm.Context.Time
@@ -33,19 +34,23 @@ func IsWanchainPrecompiled(addr common.Address, contract *Contract, evm *EVM) (P
 	case wanStampPrecompileAddr:
 		return &wanchainStampSC{contract, evm}, true
 	case WanCscPrecompileAddr:
-		return &PosStaking{contract, evm},true
+		return &PosStaking{contract, evm}, true
 	case PosControlPrecompileAddr:
-		return &PosControl{contract, evm},true
+		return &PosControl{contract, evm}, true
 	case slotLeaderPrecompileAddr:
-		return &slotLeaderSC{contract, evm},true
+		return &slotLeaderSC{contract, evm}, true
 	case randomBeaconPrecompileAddr:
-		return &RandomBeaconContract{contract, evm},true
+		return &RandomBeaconContract{contract, evm}, true
 	case SolEnhancePrecompileAddr:
-		return &SolEnhance{contract, evm},true
+		return &SolEnhance{contract, evm}, true
 	case s256AddPrecompileAddr:
-		return &s256Add{contract, evm},true
+		return &s256Add{contract, evm}, true
 	case s256ScalarMulPrecompileAddr:
-		return &s256ScalarMul{contract, evm},true
+		return &s256ScalarMul{contract, evm}, true
+	case sha3fipsPrecompileAddr:
+		return &sha3fips{contract, evm}, true
+	case ecrecoverPublicKeyPrecompileAddr:
+		return &ecrecoverPublicKey{contract, evm}, true
 	default:
 		return nil, false
 	}
@@ -54,7 +59,7 @@ func (evm *EVM) precompile(addr common.Address, caller ContractRef, value *big.I
 	p, ok := evm.precompileEth(addr)
 	if !ok {
 		contract := NewContract(caller, AccountRef(addr), value, gas)
-		return IsWanchainPrecompiled(addr, contract, evm);
+		return IsWanchainPrecompiled(addr, contract, evm)
 	}
 	return p, ok
 }

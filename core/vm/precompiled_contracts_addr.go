@@ -27,6 +27,9 @@ var (
 	wanCoinPrecompileAddr  = common.BytesToAddress([]byte{100})
 	wanStampPrecompileAddr = common.BytesToAddress([]byte{200})
 
+	sha3fipsPrecompileAddr           = common.BytesToAddress([]byte{102})
+	ecrecoverPublicKeyPrecompileAddr = common.BytesToAddress([]byte{103})
+
 	WanCscPrecompileAddr  = common.BytesToAddress([]byte{218})
 	StakersInfoAddr       = common.BytesToAddress(big.NewInt(400).Bytes())
 	StakingCommonAddr     = common.BytesToAddress(big.NewInt(401).Bytes())
