@@ -1003,6 +1003,7 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 
 	// Create an empty block based on temporary copied state for
 	// sealing in advance without waiting block execution finished.
+	w.disablePreseal()
 	//if !noempty && atomic.LoadUint32(&w.noempty) == 0 {
 	//	w.commit(uncles, nil, false, tstart)
 	//}
