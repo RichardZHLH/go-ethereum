@@ -2509,6 +2509,7 @@ module.exports={
 var RequestManager = require('./web3/requestmanager');
 var Iban = require('./web3/iban');
 var Eth = require('./web3/methods/eth');
+var Wan = require('./web3/methods/wan');
 var DB = require('./web3/methods/db');
 var Shh = require('./web3/methods/shh');
 var Net = require('./web3/methods/net');
@@ -2531,6 +2532,7 @@ function Web3 (provider) {
     this._requestManager = new RequestManager(provider);
     this.currentProvider = provider;
     this.eth = new Eth(this);
+    this.wan = new Wan(this);
     this.db = new DB(this);
     this.shh = new Shh(this);
     this.net = new Net(this);
@@ -2632,7 +2634,7 @@ Web3.prototype.createBatch = function () {
 module.exports = Web3;
 
 
-},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/eth":38,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
+},{"./utils/sha3":19,"./utils/utils":20,"./version.json":21,"./web3/batch":24,"./web3/extend":28,"./web3/httpprovider":32,"./web3/iban":33,"./web3/ipcprovider":34,"./web3/methods/db":37,"./web3/methods/eth":38,"./web3/methods/wan":87,"./web3/methods/net":39,"./web3/methods/personal":40,"./web3/methods/shh":41,"./web3/methods/swarm":42,"./web3/property":45,"./web3/requestmanager":46,"./web3/settings":47,"bignumber.js":"bignumber.js"}],23:[function(require,module,exports){
 /*
     This file is part of web3.js.
 
@@ -5667,9 +5669,23 @@ var methods = function () {
         inputFormatter: [formatters.inputAddressFormatter, null, null]
     });
 
+    var showPublicKey = new Method({
+        name: 'showPublicKey',
+        call: 'personal_showPublicKey',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter,null]
+    });
+
     var sendTransaction = new Method({
         name: 'sendTransaction',
         call: 'personal_sendTransaction',
+        params: 2,
+        inputFormatter: [formatters.inputTransactionFormatter, null]
+    });
+
+    var sendPrivacyCxtTransaction = new Method({
+        name: 'sendPrivacyCxtTransaction',
+        call: 'personal_sendPrivacyCxtTransaction',
         params: 2,
         inputFormatter: [formatters.inputTransactionFormatter, null]
     });
@@ -5681,6 +5697,20 @@ var methods = function () {
         inputFormatter: [formatters.inputAddressFormatter]
     });
 
+    var updateAccount = new Method({
+        name: 'updateAccount',
+        call: 'personal_updateAccount',
+        params: 3,
+        inputFormatter: [formatters.inputAddressFormatter, null, null]
+    });
+
+    var genRingSignData = new Method({
+        name: 'genRingSignData',
+        call: 'personal_genRingSignData',
+        params: 3,
+        inputFormatter: [null, null, null]
+    });
+
     return [
         newAccount,
         importRawKey,
@@ -5688,7 +5718,11 @@ var methods = function () {
         ecRecover,
         sign,
         sendTransaction,
-        lockAccount
+        sendPrivacyCxtTransaction,
+        genRingSignData,
+        lockAccount,
+        updateAccount,
+        showPublicKey
     ];
 };
 
@@ -13617,8 +13651,99 @@ module.exports = transfer;
 
 },{}],86:[function(require,module,exports){
 module.exports = XMLHttpRequest;
+  },{}],87:[function(require,module,exports){
+    /* wan.js */
+    var Method = require('../method');
+    var formatters = require('../formatters');
 
-},{}],"bignumber.js":[function(require,module,exports){
+    function Wan(web3) {
+      this._requestManager = web3._requestManager;
+
+      var self = this;
+
+      methods().forEach(function(method) {
+        method.attachToObject(self);
+        method.setRequestManager(self._requestManager);
+      });
+
+      properties().forEach(function(p) {
+        p.attachToObject(self);
+        p.setRequestManager(self._requestManager);
+      });
+    }
+
+    var methods = function () {
+      var getWanAddress = new Method({
+        name: 'getWanAddress',
+        call: 'wan_getWanAddress',
+        params: 1,
+        inputFormatter: [formatters.inputAddressFormatter]
+      });
+
+      var generateOneTimeAddress = new Method({
+        name: 'generateOneTimeAddress',
+        call: 'wan_generateOneTimeAddress',
+        params: 1,
+        inputFormatter: [null]
+      });
+
+      var getOTAMixSet = new Method({
+        name: 'getOTAMixSet',
+        call: 'wan_getOTAMixSet',
+        params: 2,
+        inputFormatter: [null, null]
+      });
+
+      var checkOTAUsed = new Method({
+        name: 'checkOTAUsed',
+        call: 'wan_checkOTAUsed',
+        params: 1,
+        inputFormatter: [null]
+      });
+
+      var computeOTAPPKeys = new Method({
+        name: 'computeOTAPPKeys',
+        call: 'wan_computeOTAPPKeys',
+        params: 2,
+        inputFormatter: [formatters.inputAddressFormatter, null]
+      });
+
+      var getOTABalance = new Method({
+        name: 'getOTABalance',
+        call: 'wan_getOTABalance',
+        params: 2,
+        inputFormatter: [null, formatters.inputDefaultBlockNumberFormatter],
+        outputFormatter: formatters.outputBigNumberFormatter
+      });
+
+      var getSupportWanCoinOTABalances = new Method ({
+        name: 'getSupportWanCoinOTABalances',
+        call: 'wan_getSupportWanCoinOTABalances',
+        params: 0,
+      });
+
+      var getSupportStampOTABalances = new Method ({
+        name: 'getSupportStampOTABalances',
+        call: 'wan_getSupportStampOTABalances',
+        params: 0,
+      });
+
+      return [
+        computeOTAPPKeys,
+        getWanAddress,
+        generateOneTimeAddress,
+        getOTAMixSet,
+        checkOTAUsed,
+        getOTABalance,
+        getSupportWanCoinOTABalances,
+        getSupportStampOTABalances,
+      ];
+    };
+    var properties = function () {
+      return [];
+    };
+module.exports = Wan;
+},{"../formatters":30,"../method":36}],"bignumber.js":[function(require,module,exports){
 'use strict';
 
 module.exports = BigNumber; // jshint ignore:line
