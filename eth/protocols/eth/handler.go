@@ -218,9 +218,9 @@ func handleMessage(backend Backend, peer *Peer) error {
 	}
 	defer msg.Discard()
 
-	var handlers = eth65         // used for connect to old gwan
-	if peer.Version() >= ETH66 { // Left in as a sample when new protocol is added
-		handlers = eth66
+	var handlers = eth66        // used for connect to old gwan
+	if peer.Version() < ETH66 { // Left in as a sample when new protocol is added
+		handlers = eth65
 	}
 
 	// Track the amount of time it takes to serve the request and run the handler
