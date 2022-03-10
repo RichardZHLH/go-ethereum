@@ -523,10 +523,10 @@ func (s *PublicTransactionPoolAPI) CheckOTAUsed(ctx context.Context, OTAImage st
 // from account address and ota full address.
 func (s *PublicTransactionPoolAPI) ComputeOTAPPKeys(ctx context.Context, address common.Address, inOtaAddr string) (string, error) {
 	account := accounts.Account{Address: address}
-	wallet, err := s.b.AccountManager().Find(account)
-	if err != nil {
-		return "", err
-	}
+	//wallet, err := s.b.AccountManager().Find(account)
+	//if err != nil {
+	//	return "", err
+	//}
 
 	wanBytes, err := hexutil.Decode(inOtaAddr)
 	if err != nil {
@@ -547,8 +547,9 @@ func (s *PublicTransactionPoolAPI) ComputeOTAPPKeys(ctx context.Context, address
 
 	BX := "0x" + otaAddr[128:192]
 	BY := "0x" + otaAddr[192:256]
+	bd := s.b.AccountManager().Backends(keystore.KeyStoreType)
 
-	sS, err := wallet.(accounts.WanWallet).ComputeOTAPPKeys(account, AX, AY, BX, BY)
+	sS, err := bd[0].(accounts.WanWallet).ComputeOTAPPKeys(account, AX, AY, BX, BY)
 	if err != nil {
 		return "", err
 	}
@@ -574,12 +575,13 @@ func (s *PublicTransactionPoolAPI) ComputeOTAPPKeys(ctx context.Context, address
 // GetWanAddress returns corresponding WAddress of an ordinary account
 func (s *PublicTransactionPoolAPI) GetWanAddress(ctx context.Context, a common.Address) (string, error) {
 	account := accounts.Account{Address: a}
+	bd := s.b.AccountManager().Backends(keystore.KeyStoreType)
 	// first fetch the wallet/keystore, and then retrieve the wanaddress
-	wallet, err := s.b.AccountManager().Find(account)
-	if err != nil {
-		return "", err
-	}
-	wanAddr, err := wallet.(accounts.WanWallet).GetWanAddress(account)
+	//wallet, err := s.b.AccountManager().Find(account)
+	//if err != nil {
+	//	return "", err
+	//}
+	wanAddr, err := bd[0].(accounts.WanWallet).GetWanAddress(account)
 	if err != nil {
 		return "", err
 	}
