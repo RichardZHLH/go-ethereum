@@ -41,3 +41,9 @@ type ChainSideEvent struct {
 }
 
 type ChainHeadEvent struct{ Block *types.Block }
+
+type ReorgEvent struct {
+	EpochId uint64
+	SlotId  uint64
+	Len     uint64
+}

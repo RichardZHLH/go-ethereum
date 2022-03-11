@@ -46,7 +46,7 @@ import (
 	"github.com/ethereum/go-ethereum/pos/posconfig"
 	posUtil "github.com/ethereum/go-ethereum/pos/util"
 	"github.com/ethereum/go-ethereum/trie"
-	"github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru"
 )
 
 var (
@@ -187,6 +187,7 @@ type BlockChain struct {
 	chainSideFeed event.Feed
 	chainHeadFeed event.Feed
 	logsFeed      event.Feed
+	reorgFeed     event.Feed
 	blockProcFeed event.Feed
 	scope         event.SubscriptionScope
 	genesisBlock  *types.Block
@@ -2138,6 +2139,22 @@ func (bc *BlockChain) reorg(oldBlock, newBlock *types.Block) error {
 	} else {
 		log.Error("Impossible reorg, please file an issue", "oldnum", oldBlock.Number(), "oldhash", oldBlock.Hash(), "newnum", newBlock.Number(), "newhash", newBlock.Hash())
 	}
+
+	// insert blocks. Order does not matter. Last block will be written in ImportChain itself which creates the new head properly
+	newChainLen := len(newChain)
+	epochId, slotId := posUtil.CalEpSlbyTd(newChain[newChainLen-1].Header().Difficulty.Uint64())
+	bc.updateReOrg(epochId, slotId, uint64(len(oldChain)))
+	go bc.reorgFeed.Send(ReorgEvent{epochId, slotId, uint64(len(oldChain))})
+
+	//if reorg length is bigger than k,do not let reorg happen
+	if posconfig.FirstEpochId != 0 && uint(newChainLen) > posconfig.Cfg().K {
+		log.Error("Impossible reorg because reorg length is bigger than K setting", "reorg length", newChainLen, "old chain rollback lenght", len(oldChain))
+		return ErrSecurityViolated
+
+	} else {
+		log.Info("reorg happended", "reorg length", newChainLen, "old chain rollback length", len(oldChain))
+	}
+
 	// Insert the new chain(except the head block(reverse order)),
 	// taking care of the proper incremental order.
 	for i := len(newChain) - 1; i >= 1; i-- {

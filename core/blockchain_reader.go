@@ -360,6 +360,10 @@ func (bc *BlockChain) SubscribeRemovedLogsEvent(ch chan<- RemovedLogsEvent) even
 	return bc.scope.Track(bc.rmLogsFeed.Subscribe(ch))
 }
 
+func (bc *BlockChain) SubscribeReorgEvent(ch chan<- ReorgEvent) event.Subscription {
+	return bc.scope.Track(bc.reorgFeed.Subscribe(ch))
+}
+
 // SubscribeChainEvent registers a subscription of ChainEvent.
 func (bc *BlockChain) SubscribeChainEvent(ch chan<- ChainEvent) event.Subscription {
 	return bc.scope.Track(bc.chainFeed.Subscribe(ch))
