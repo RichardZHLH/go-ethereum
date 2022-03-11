@@ -470,10 +470,10 @@ func (w *worker) mainLoop() {
 		select {
 		case req := <-w.newWorkCh:
 			log.Debug(fmt.Sprintf("%v", req))
-			//w.commitNewWork(req.interrupt, req.noempty, req.timestamp)
+			w.commitNewWork(req.interrupt, req.noempty, req.timestamp, false)
 
 		case slotTime := <-w.chainSlotTimer:
-			w.commitNewWork(nil, false, int64(slotTime))
+			w.commitNewWork(nil, false, int64(slotTime), true)
 
 		case ev := <-w.chainSideCh:
 			// Short circuit for duplicate side blocks
@@ -510,7 +510,7 @@ func (w *worker) mainLoop() {
 						uncles = append(uncles, uncle.Header())
 						return false
 					})
-					w.commit(uncles, nil, true, start)
+					w.commit(uncles, nil, true, start, false)
 				}
 			}
 
@@ -525,42 +525,40 @@ func (w *worker) mainLoop() {
 			log.Debug("worker:mainloop", "len(ev.Txs)", len(ev.Txs))
 			// Add by Jacob end
 
-			// cancel by jacob end
-			/*
-				if !w.isRunning() && w.current != nil {
-					// If block is already full, abort
-					if gp := w.current.gasPool; gp != nil && gp.Gas() < params.TxGas {
-						continue
-					}
-					w.mu.RLock()
-					coinbase := w.coinbase
-					w.mu.RUnlock()
-
-					txs := make(map[common.Address]types.Transactions)
-					for _, tx := range ev.Txs {
-						acc, _ := types.Sender(w.current.signer, tx)
-						txs[acc] = append(txs[acc], tx)
-					}
-					txset := types.NewTransactionsByPriceAndNonce(w.current.signer, txs, w.current.header.BaseFee)
-					tcount := w.current.tcount
-					w.commitTransactions(txset, coinbase, nil)
-					// Only update the snapshot if any new transactons were added
-					// to the pending block
-					if tcount != w.current.tcount {
-						w.updateSnapshot()
-					}
-				} else {
-					// Special case, if the consensus engine is 0 period clique(dev mode),
-					// submit mining work here since all empty submission will be rejected
-					// by clique. Of course the advance sealing(empty submission) is disabled.
-					if w.chainConfig.Clique != nil && w.chainConfig.Clique.Period == 0 {
-						// todo it is about block produce, change later
-						// w.commitNewWork(nil, true, time.Now().Unix())
-					}
+			log.Debug("worker:mainloop", "w.isRunning()", w.isRunning(), "w.current", w.current)
+			if !w.isRunning() && w.current != nil {
+				// If block is already full, abort
+				if gp := w.current.gasPool; gp != nil && gp.Gas() < params.TxGas {
+					continue
 				}
-				atomic.AddInt32(&w.newTxs, int32(len(ev.Txs)))
-			*/
-			// cancel by Jacob end
+				w.mu.RLock()
+				coinbase := w.coinbase
+				w.mu.RUnlock()
+
+				txs := make(map[common.Address]types.Transactions)
+				for _, tx := range ev.Txs {
+					acc, _ := types.Sender(w.current.signer, tx)
+					txs[acc] = append(txs[acc], tx)
+				}
+				txset := types.NewTransactionsByPriceAndNonce(w.current.signer, txs, w.current.header.BaseFee)
+				tcount := w.current.tcount
+				w.commitTransactions(txset, coinbase, nil)
+				// Only update the snapshot if any new transactons were added
+				// to the pending block
+				if tcount != w.current.tcount {
+					w.updateSnapshot()
+				}
+			} else {
+				// Special case, if the consensus engine is 0 period clique(dev mode),
+				// submit mining work here since all empty submission will be rejected
+				// by clique. Of course the advance sealing(empty submission) is disabled.
+				if w.chainConfig.Clique != nil && w.chainConfig.Clique.Period == 0 {
+					// todo it is about block produce, change later
+					// w.commitNewWork(nil, true, time.Now().Unix())
+				}
+			}
+			atomic.AddInt32(&w.newTxs, int32(len(ev.Txs)))
+
 		// System stopped
 		case <-w.exitCh:
 			return
@@ -914,7 +912,7 @@ func (w *worker) commitTransactions(txs *types.TransactionsByPriceAndNonce, coin
 }
 
 // commitNewWork generates several new sealing tasks based on the parent block.
-func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) {
+func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64, isPush bool) {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 
@@ -1039,12 +1037,12 @@ func (w *worker) commitNewWork(interrupt *int32, noempty bool, timestamp int64) 
 			return
 		}
 	}
-	w.commit(uncles, w.fullTaskHook, true, tstart)
+	w.commit(uncles, w.fullTaskHook, true, tstart, isPush)
 }
 
 // commit runs any post-transaction state modifications, assembles the final block
 // and commits new work if consensus engine is running.
-func (w *worker) commit(uncles []*types.Header, interval func(), update bool, start time.Time) error {
+func (w *worker) commit(uncles []*types.Header, interval func(), update bool, start time.Time, isPush bool) error {
 	// Deep copy receipts here to avoid interaction between different tasks.
 	receipts := copyReceipts(w.current.receipts)
 	s := w.current.state.Copy()
@@ -1052,7 +1050,7 @@ func (w *worker) commit(uncles []*types.Header, interval func(), update bool, st
 	if err != nil {
 		return err
 	}
-	if w.isRunning() {
+	if w.isRunning() && isPush {
 		if interval != nil {
 			interval()
 		}

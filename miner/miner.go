@@ -176,7 +176,7 @@ func (miner *Miner) invokePosTimeLoop() {
 		log.Info("Invoke backendTimerLoop from miner start, pos active")
 		go miner.backendTimerLoop(miner.eth)
 	} else if !miner.eth.BlockChain().IsInPosStage() {
-		miner.worker.commitNewWork(nil, true, 0)
+		miner.worker.commitNewWork(nil, true, 0, true)
 	} else {
 		log.Info("Invoke backendTimerLoop from miner start, in PosStage")
 		go miner.backendTimerLoop(miner.eth)
