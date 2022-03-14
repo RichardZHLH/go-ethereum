@@ -1496,6 +1496,7 @@ func (bc *BlockChain) writeBlockWithState(block *types.Block, receipts []*types.
 	if bc.Config().IsLondon(block.Number()) {
 		if !params.IsLondonActive() {
 			params.SetLondonActive(true)
+			log.Info("london forked........")
 		}
 	}
 	// add by Jacob end

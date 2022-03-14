@@ -303,6 +303,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	if chainConfig.IsLondon(big.NewInt(0).SetUint64(core.PeekChainHeight(chainDb))) {
 		if !params.IsLondonActive() {
 			params.SetLondonActive(true)
+			log.Info("london forked........")
 		}
 	}
 	// add by Jacob end

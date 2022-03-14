@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/params"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -254,9 +255,18 @@ func (args *TransactionArgs) toTransaction() *types.Transaction {
 		if args.AccessList != nil {
 			al = *args.AccessList
 		}
+
+		// add by Jacob begin
+		targetChinId := (*big.Int)(args.ChainID)
+		if params.IsOldChainId((*big.Int)(args.ChainID).Uint64()) {
+			targetChinId = new(big.Int).SetUint64(params.JupiterChainId((*big.Int)(args.ChainID).Uint64()))
+		}
+		// add by Jacob end
+
 		data = &types.DynamicFeeTx{
-			To:         args.To,
-			ChainID:    (*big.Int)(args.ChainID),
+			To: args.To,
+			//ChainID:    (*big.Int)(args.ChainID),
+			ChainID:    targetChinId,
 			Nonce:      uint64(*args.Nonce),
 			Gas:        uint64(*args.Gas),
 			GasFeeCap:  (*big.Int)(args.MaxFeePerGas),
@@ -265,6 +275,7 @@ func (args *TransactionArgs) toTransaction() *types.Transaction {
 			Data:       args.data(),
 			AccessList: al,
 		}
+
 	case args.AccessList != nil:
 		data = &types.AccessListTx{
 			To:         args.To,

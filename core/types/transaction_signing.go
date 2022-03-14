@@ -20,6 +20,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/log"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -189,7 +190,8 @@ func (s londonSigner) Sender(tx *Transaction) (common.Address, error) {
 	// DynamicFee txs are defined to use 0 and 1 as their recovery
 	// id, add 27 to become equivalent to unprotected Homestead signatures.
 	V = new(big.Int).Add(V, big.NewInt(27))
-	if tx.ChainId().Cmp(new(big.Int).SetUint64(params.JupiterChainId(s.chainId.Uint64())) ) != 0 {
+	log.Info("londonSigner:Sender", "", tx.ChainId().Uint64(), "", s.chainId.Uint64())
+	if tx.ChainId().Cmp(new(big.Int).SetUint64(params.JupiterChainId(s.chainId.Uint64()))) != 0 {
 		return common.Address{}, ErrInvalidChainId
 	}
 	return recoverPlain(s.Hash(tx), R, S, V, true)
@@ -207,7 +209,8 @@ func (s londonSigner) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big
 	}
 	// Check that chain ID of tx matches the signer. We also accept ID zero here,
 	// because it indicates that the chain ID was not specified in the tx.
-	if txdata.ChainID.Sign() != 0 && txdata.ChainID.Cmp(s.chainId) != 0 {
+	//if txdata.ChainID.Sign() != 0 && txdata.ChainID.Cmp(s.chainId) != 0 {
+	if txdata.ChainID.Sign() != 0 && txdata.ChainID.Cmp(new(big.Int).SetUint64(params.JupiterChainId(s.chainId.Uint64()))) != 0 {
 		return nil, nil, nil, ErrInvalidChainId
 	}
 	R, S, _ = decodeSignature(sig)
@@ -256,7 +259,6 @@ func (s eip2930Signer) Equal(s2 Signer) bool {
 func (s eip2930Signer) Sender(tx *Transaction) (common.Address, error) {
 	return s.EIP155Signer.Sender(tx)
 }
-
 
 func (s eip2930Signer) SignatureValues(tx *Transaction, sig []byte) (R, S, V *big.Int, err error) {
 	switch txdata := tx.inner.(type) {
@@ -363,7 +365,7 @@ func (s EIP155Signer) Sender(tx *Transaction) (common.Address, error) {
 	}
 
 	if !IsEthereumTx(tx.ChainId().Uint64()) && tx.ChainId().Uint64() == params.JupiterChainId(s.chainId.Uint64()) {
-		fmt.Println("IsEthereumTx(tx.Type()):",IsEthereumTx(tx.ChainId().Uint64()))
+		fmt.Println("IsEthereumTx(tx.Type()):", IsEthereumTx(tx.ChainId().Uint64()))
 		fmt.Println("tx.Type():", tx.Type())
 		return common.Address{}, ErrInvalidChainId
 	}
@@ -404,7 +406,7 @@ func (s EIP155Signer) Hash(tx *Transaction) common.Hash {
 		chainId = big.NewInt(0).SetUint64(params.JupiterChainId(s.chainId.Uint64()))
 	}
 
-	if IsEthereumTx(tx.ChainId().Uint64()) && tx.Type()!= 1 && tx.Type()!= 7 { // TODO how to
+	if IsEthereumTx(tx.ChainId().Uint64()) && tx.Type() != 1 && tx.Type() != 7 { // TODO how to
 		return rlpHash([]interface{}{
 			tx.Nonce(),
 			tx.GasPrice(),
