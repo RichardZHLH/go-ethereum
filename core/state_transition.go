@@ -161,10 +161,11 @@ func IntrinsicGas(data []byte, accessList types.AccessList, isContractCreation b
 func IntrinsicGasWan(data []byte, accessList types.AccessList, isContractCreation bool, isHomestead, isEIP2028 bool, to *common.Address) (uint64, error) {
 	gas, err := IntrinsicGas(data, accessList, isContractCreation, isHomestead, isEIP2028)
 	if vm.IsPosPrecompiledAddr(to) {
-		gas = gas/10
+		gas = gas / 10
 	}
 	return gas, err
 }
+
 // NewStateTransition initialises and returns a new state transition object.
 func NewStateTransition(evm *vm.EVM, msg Message, gp *GasPool) *StateTransition {
 	return &StateTransition{
@@ -378,10 +379,10 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 	} else {
 		// After EIP-3529: refunds are capped to gasUsed / 5
 		st.refundGas(params.RefundQuotientEIP3529)
+		usedGas = st.gasUsed() // add by Jacob for fix issue of empty gas used of receipt.
 	}
 	effectiveTip := st.gasPrice
 	if london {
-// 这里不对.lundon 要走pos流程
 		epochID, _ := util.GetEpochSlotIDFromDifficulty(st.evm.Context.Difficulty)
 		effectiveTip = cmath.BigMin(st.gasTipCap, new(big.Int).Sub(st.gasFeeCap, st.evm.Context.BaseFee))
 		incentive.AddEpochGas(st.state, new(big.Int).Mul(new(big.Int).SetUint64(usedGas), effectiveTip), epochID)
@@ -394,8 +395,6 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error) {
 			incentive.AddEpochGas(st.state, new(big.Int).Mul(new(big.Int).SetUint64(usedGas), st.gasPrice), epochID)
 		}
 	}
-
-
 
 	return &ExecutionResult{
 		UsedGas:    usedGas, //st.gasUsed(),
