@@ -114,11 +114,11 @@ const (
 
 	MainnetMarsEpochId = MainnetVenusEpochId
 	TestnetMarsEpochId = 18506 //2020.09.01
-
+	PlutoMarsEpochId   = 99998506
 	// After Jupiter fork, wanchain support ethereum tx and wallet.
 	MainnetJupiterEpochId = 18732
 	TestnetJupiterEpochId = 18698
-	PlutoJupiterEpochId = 0
+	PlutoJupiterEpochId   = 0
 
 	TARGETS_LOCKED_EPOCH = 90 //90 DAYS,90 EPOCH
 	RETURN_DIVIDE        = 10000
@@ -245,7 +245,7 @@ func Init(nodeCfg *node.Config, networkId uint64) {
 		}
 		DefaultConfig.MercuryEpochId = TestnetMercuryEpochId
 		DefaultConfig.VenusEpochId = TestnetVenusEpochId
-		DefaultConfig.MarsEpochId = TestnetMarsEpochId
+		DefaultConfig.MarsEpochId = PlutoMarsEpochId
 		DefaultConfig.JupiterEpochId = PlutoJupiterEpochId
 	} else if networkId == params.INTERNAL_CHAIN_ID {
 		PosOwnerAddr = PosOwnerAddrInternal

@@ -479,7 +479,7 @@ func (s *SolEnhance) ValidTx(stateDB StateDB, signer types.Signer, tx *types.Tra
 
 func (s *SolEnhance) Run(input []byte) ([]byte, error) {
 	contract := s.contract
-	evm  := s.evm
+	evm := s.evm
 	epid, _ := posutil.CalEpochSlotID(evm.Time().Uint64())
 	if epid < posconfig.Cfg().MarsEpochId {
 		// return nil,errors.New("not reach forked epochid")
@@ -883,16 +883,22 @@ func (s *SolEnhance) getPosTotalRet(payload []byte, contract *Contract, evm *EVM
 	epid, _ := posutil.CalEpochSlotID(time.Uint64())
 	epid--
 
-	inst := posutil.PosAvgRetInst()
-	if inst == nil {
-		log.Warn("not initialzied for pos return", "time", time, "epid", epid)
-		return []byte{0}, errors.New("not initialzied for pos return ")
-	}
+	var totalIncentive *big.Int
+	if params.IsLondonActive() {
+		inst := posutil.PosAvgRetInst()
+		totalIncentive = inst.GetYearReward(epid)
+	} else {
+		inst := posutil.PosAvgRetInst()
+		if inst == nil {
+			log.Warn("not initialzied for pos return", "time", time, "epid", epid)
+			return []byte{0}, errors.New("not initialzied for pos return ")
+		}
 
-	totalIncentive, err := inst.GetAllIncentive(epid)
-	if err != nil || totalIncentive == nil {
-		log.Warn("GetAllIncentive failed", "err", err, "time", time, "epid", epid)
-		return []byte{0}, nil
+		totalIncentive, err := inst.GetAllIncentive(epid)
+		if err != nil || totalIncentive == nil {
+			log.Warn("GetAllIncentive failed", "err", err, "time", time, "epid", epid)
+			return []byte{0}, nil
+		}
 	}
 
 	totalIncentive = totalIncentive.Mul(totalIncentive, big.NewInt(10000)) //keep 4 dots parts
@@ -913,7 +919,7 @@ func hexKey(prv string) *ecies.PrivateKey {
 }
 
 // bn256Add implements a native elliptic curve point addition.
-type s256Add struct{
+type s256Add struct {
 	contract *Contract
 	evm      *EVM
 }
@@ -925,7 +931,7 @@ func (s *s256Add) RequiredGas(input []byte) uint64 {
 
 func (s *s256Add) Run(payload []byte) ([]byte, error) {
 	//contract := s.contract
-	evm  := s.evm
+	evm := s.evm
 	if evm != nil {
 		epid, _ := posutil.CalEpochSlotID(evm.Time().Uint64())
 		if epid < posconfig.Cfg().MarsEpochId {
@@ -971,7 +977,7 @@ func (s *s256Add) ValidTx(stateDB StateDB, signer types.Signer, tx *types.Transa
 }
 
 // bn256ScalarMul implements a native elliptic curve scalar multiplication.
-type s256ScalarMul struct{
+type s256ScalarMul struct {
 	contract *Contract
 	evm      *EVM
 }
@@ -983,7 +989,7 @@ func (s *s256ScalarMul) RequiredGas(input []byte) uint64 {
 
 func (s *s256ScalarMul) Run(payload []byte) ([]byte, error) {
 	//contract := s.contract
-	evm  := s.evm
+	evm := s.evm
 	if evm != nil {
 		epid, _ := posutil.CalEpochSlotID(evm.Time().Uint64())
 		if epid < posconfig.Cfg().MarsEpochId {
