@@ -39,7 +39,7 @@ const (
 	// private transaction.
 	//SlsStgOnePerByteGas		uint64 = 20      // per byte gas for SlsStgOnePerByteGas
 	SlsStgTwoPerByteGas uint64 = 20 // per byte gas for SlsStgOnePerByteGas
-
+	InitialBaseFee           = 100000000 // Initial base fee for EIP-1559 blocks.
 )
 
 var (
