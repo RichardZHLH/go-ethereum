@@ -248,6 +248,21 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		return nil, err
 	}
 
+	// jacob pos start
+        if inPosStage {
+                miner.PosInit(eth)
+                chainConfig.SetPosActive()
+        }
+
+        // add by Jacob begin
+        if chainConfig.IsLondon(big.NewInt(0).SetUint64(core.PeekChainHeight(chainDb))) {
+                if !params.IsLondonActive() {
+                        params.SetLondonActive(true)
+                        log.Info("london forked........")
+                }
+        }
+        // add by Jacob end
+
 	eth.miner = miner.New(eth, &config.Miner, chainConfig, eth.EventMux(), eth.engine, eth.isLocalBlock)
 	eth.miner.SetExtra(makeExtraData(config.Miner.ExtraData))
 
@@ -292,21 +307,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 				"age", common.PrettyAge(t))
 		}
 	}
-
-	// jacob pos start
-	if inPosStage {
-		miner.PosInit(eth)
-		chainConfig.SetPosActive()
-	}
-
-	// add by Jacob begin
-	if chainConfig.IsLondon(big.NewInt(0).SetUint64(core.PeekChainHeight(chainDb))) {
-		if !params.IsLondonActive() {
-			params.SetLondonActive(true)
-			log.Info("london forked........")
-		}
-	}
-	// add by Jacob end
 
 	return eth, nil
 }
