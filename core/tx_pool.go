@@ -944,14 +944,12 @@ func (pool *TxPool) addTxs(txs []*types.Transaction, local, sync bool) []error {
 		return errs
 	}
 
+	go pool.txFeed.Send(NewTxsEvent{txs})
+
 	// Process all the new transaction and merge any errors into the original slice
 	pool.mu.Lock()
 	newErrs, dirtyAddrs := pool.addTxsLocked(news, local)
 	pool.mu.Unlock()
-
-	go pool.txFeed.Send(NewTxsEvent{txs})
-
-	// add by Jacob end.
 
 	var nilSlot = 0
 	for _, err := range newErrs {

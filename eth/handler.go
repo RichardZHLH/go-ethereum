@@ -354,6 +354,7 @@ func (h *handler) SwitchEngine(engine consensus.Engine) {
 	h.blockFetcher.UpdateValidator(validator)
 	//todo need updateValidator for TXFetcher??
 }
+
 // runSnapExtension registers a `snap` peer into the joint eth/snap peerset and
 // starts handling inbound messages. As `snap` is only a satellite protocol to
 // `eth`, all subsystem registrations and lifecycle management will be done by
@@ -540,6 +541,7 @@ func (h *handler) txBroadcastLoop() {
 	for {
 		select {
 		case event := <-h.txsCh:
+			log.Debug("txBroadcastLoop get msg from channel", "", event.Txs[0].Hash().String())
 			h.BroadcastTransactions(event.Txs)
 		case <-h.txsSub.Err():
 			return
