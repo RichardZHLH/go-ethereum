@@ -949,6 +949,10 @@ func (pool *TxPool) addTxs(txs []*types.Transaction, local, sync bool) []error {
 	newErrs, dirtyAddrs := pool.addTxsLocked(news, local)
 	pool.mu.Unlock()
 
+	go pool.txFeed.Send(NewTxsEvent{txs})
+
+	// add by Jacob end.
+
 	var nilSlot = 0
 	for _, err := range newErrs {
 		for errs[nilSlot] != nil {
@@ -972,11 +976,6 @@ func (pool *TxPool) addTxsLocked(txs []*types.Transaction, local bool) ([]error,
 	errs := make([]error, len(txs))
 	for i, tx := range txs {
 		replaced, err := pool.add(tx, local)
-		// add by Jacob begin
-		if err == nil {
-			go pool.txFeed.Send(NewTxsEvent{txs})
-		}
-		// add by Jacob end.
 		errs[i] = err
 		if err == nil && !replaced {
 			dirty.addTx(tx)
