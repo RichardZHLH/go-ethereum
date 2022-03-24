@@ -3,6 +3,7 @@ package posapi
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"sort"
 	"time"
 
@@ -241,9 +242,9 @@ func (a PosApi) GetSlotCreateStatusByEpochID(epochID uint64) bool {
 	return slotleader.GetSlotLeaderSelection().GetSlotCreateStatusByEpochID(epochID)
 }
 
-func (a PosApi) GetRandom(epochId uint64, blockNr int64) (*big.Int, error) {
+func (a PosApi) GetRandom(epochId uint64, blockNr int64) (string, error) {
 	if !isPosStage() {
-		return nil, nil
+		return string(""), nil
 	}
 
 	if blockNr > a.chain.CurrentHeader().Number.Int64() {
@@ -253,20 +254,20 @@ func (a PosApi) GetRandom(epochId uint64, blockNr int64) (*big.Int, error) {
 	epID, _ := util.CalEpSlbyTd(a.chain.CurrentHeader().Difficulty.Uint64())
 
 	if epochId > epID {
-		return nil, errors.New("wrong epochId (It hasn't arrived yet.):" + convert.Uint64ToString(epochId))
+		return string(""), errors.New("wrong epochId (It hasn't arrived yet.):" + convert.Uint64ToString(epochId))
 	}
 
 	state, _, err := a.backend.StateAndHeaderByNumber(context.Background(), rpc.BlockNumber(blockNr))
 	if err != nil {
-		return nil, err
+		return string(""), err
 	}
 
 	r := vm.GetStateR(state, epochId)
 	if r == nil {
-		return nil, errors.New("no random number exists")
+		return string(""), errors.New("no random number exists")
 	}
 
-	return r, nil
+	return hexutil.Encode(r.Bytes()), nil
 }
 
 func (a PosApi) GetChainQuality(epochid uint64, slotid uint64) (uint64, error) {

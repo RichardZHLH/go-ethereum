@@ -1088,7 +1088,7 @@ func (s *Service) reportPosStats(conn *connWrapper) error {
 		selfElActivity  uint64
 		selfRnpActivity uint64
 	)
-	
+
 	fullBackend, ok := s.backend.(fullNodeBackend)
 	if ok {
 		mining = fullBackend.Miner().Mining()
@@ -1114,12 +1114,14 @@ func (s *Service) reportPosStats(conn *connWrapper) error {
 			epBlockCount, _ = s.api.GetEpochBlkCnt(epochId)
 			curR, err := s.api.GetRandom(epochId, -1)
 			if err == nil {
-				curRandom = common.ToHex(curR.Bytes())
+				//curRandom = common.ToHex(curR.Bytes())
+				curRandom = curR
 			}
 
 			nextR, err := s.api.GetRandom(epochId+1, -1)
 			if err == nil {
-				nextRandom = common.ToHex(nextR.Bytes())
+				//nextRandom = common.ToHex(nextR.Bytes())
+				nextRandom = nextR
 			}
 
 			curRbStage = s.api.GetRbStage(slotId)
