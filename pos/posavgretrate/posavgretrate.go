@@ -92,3 +92,6 @@ func (p *PosAvgRet) GetAllStakeAndReturn(epochID uint64) (*big.Int, error) {
 func (p *PosAvgRet) GetAllIncentive(epochID uint64) (*big.Int, error) {
 	return incentive.GetEpochIncentive(epochID)
 }
+func (p *PosAvgRet) GetYearReward(epochID uint64) *big.Int {
+	return incentive.YearReward(epochID)
+}

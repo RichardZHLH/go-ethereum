@@ -71,7 +71,7 @@ const (
 	// TODO: recovery K and time
 	// K count of each epoch
 	KCount = 12
-	K      = 50
+	K      = 1440
 
 	// SlotCount is slot count in an epoch
 	SlotCount = K * KCount
@@ -114,7 +114,7 @@ const (
 
 	MainnetMarsEpochId = MainnetVenusEpochId
 	TestnetMarsEpochId = 18506 //2020.09.01
-
+	PlutoMarsEpochId   = 99998506
 	// After Jupiter fork, wanchain support ethereum tx and wallet.
 	MainnetJupiterEpochId = 18732
 	TestnetJupiterEpochId = 18698
@@ -245,7 +245,7 @@ func Init(nodeCfg *node.Config, networkId uint64) {
 		}
 		DefaultConfig.MercuryEpochId = TestnetMercuryEpochId
 		DefaultConfig.VenusEpochId = TestnetVenusEpochId
-		DefaultConfig.MarsEpochId = TestnetMarsEpochId
+		DefaultConfig.MarsEpochId = PlutoMarsEpochId
 		DefaultConfig.JupiterEpochId = PlutoJupiterEpochId
 	} else if networkId == params.INTERNAL_CHAIN_ID {
 		PosOwnerAddr = PosOwnerAddrInternal
