@@ -1908,7 +1908,7 @@ func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chai
 		cache.Preimages = true
 		log.Info("Enabling recording of key preimages since archive mode is used")
 	}
-	if !ctx.GlobalBool(SnapshotFlag.Name) {
+	if true { //!ctx.GlobalBool(SnapshotFlag.Name) {
 		cache.SnapshotLimit = 0 // Disabled
 	}
 	if ctx.GlobalIsSet(CacheFlag.Name) || ctx.GlobalIsSet(CacheTrieFlag.Name) {
