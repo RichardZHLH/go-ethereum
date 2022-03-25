@@ -153,7 +153,11 @@ var (
 
 var GOBIN, _ = filepath.Abs(filepath.Join("build", "bin"))
 
-func executablePath(name string) string {
+func executablePath(_name string) string {
+	name := _name
+	if name == "geth" {
+		name = "gwan"
+	}
 	if runtime.GOOS == "windows" {
 		name += ".exe"
 	}
