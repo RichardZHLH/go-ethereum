@@ -19,6 +19,7 @@ package ethstats
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -102,7 +103,7 @@ type lesNodeBackend interface {
 // Service implements an Ethereum netstats reporting daemon that pushes local
 // chain statistics up to a monitoring server.
 type Service struct {
-	server  *p2p.Server // Peer-to-peer server to retrieve networking infos
+	server  *p2p.Server // Peer-to3-peer server to retrieve networking infos
 	backend backend
 	engine  consensus.Engine // Consensus engine to retrieve variadic block fields
 
@@ -357,7 +358,8 @@ func (s *Service) loop(chainHeadCh chan core.ChainHeadEvent, txEventCh chan core
 				conn *connWrapper
 				err  error
 			)
-			dialer := websocket.Dialer{HandshakeTimeout: 5 * time.Second}
+			//dialer := websocket.Dialer{HandshakeTimeout: 5 * time.Second}
+			dialer := websocket.Dialer{TLSClientConfig: &tls.Config{RootCAs: nil, InsecureSkipVerify: true}, HandshakeTimeout: 5 * time.Second}
 			header := make(http.Header)
 			header.Set("origin", "http://localhost")
 			for _, url := range urls {
