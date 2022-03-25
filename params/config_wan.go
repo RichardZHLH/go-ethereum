@@ -103,7 +103,8 @@ var (
 		},
 	}
 
-	TestnetLondonBlockNumber int64 = 22000000
+	TestnetSaturnBlockNumber int64 = 18950000
+	TestnetLondonBlockNumber       = TestnetSaturnBlockNumber
 	TestnetChainConfig             = &ChainConfig{
 		ChainID:             big.NewInt(TESTNET_CHAIN_ID),
 		HomesteadBlock:      big.NewInt(0),
