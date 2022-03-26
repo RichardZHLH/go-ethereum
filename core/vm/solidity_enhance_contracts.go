@@ -883,22 +883,23 @@ func (s *SolEnhance) getPosTotalRet(payload []byte, contract *Contract, evm *EVM
 	epid, _ := posutil.CalEpochSlotID(time.Uint64())
 	epid--
 
+	inst := posutil.PosAvgRetInst()
+	if inst == nil {
+		log.Warn("not initialzied for pos return", "time", time, "epid", epid)
+		return []byte{0}, errors.New("not initialzied for pos return ")
+	}
 	var totalIncentive *big.Int
 	if params.IsLondonActive() {
 		inst := posutil.PosAvgRetInst()
-		totalIncentive = inst.GetYearReward(epid)
+		_totalIncentive := inst.GetYearReward(epid)
+		totalIncentive = _totalIncentive.Div(_totalIncentive, big.NewInt(365))
 	} else {
-		inst := posutil.PosAvgRetInst()
-		if inst == nil {
-			log.Warn("not initialzied for pos return", "time", time, "epid", epid)
-			return []byte{0}, errors.New("not initialzied for pos return ")
-		}
-
-		totalIncentive, err := inst.GetAllIncentive(epid)
-		if err != nil || totalIncentive == nil {
+		_totalIncentive, err := inst.GetAllIncentive(epid)
+		if err != nil || _totalIncentive == nil {
 			log.Warn("GetAllIncentive failed", "err", err, "time", time, "epid", epid)
 			return []byte{0}, nil
 		}
+		totalIncentive = _totalIncentive
 	}
 
 	totalIncentive = totalIncentive.Mul(totalIncentive, big.NewInt(10000)) //keep 4 dots parts
